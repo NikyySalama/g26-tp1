@@ -3,7 +3,7 @@
 #define     SLAVE_QTY       5
 
 int main(int argc, char const *argv[]) {
-    pid_t pid;
+    int pid;
     for(int i = 1; i <= SLAVE_QTY; i++){
         pid = fork();
 
