@@ -1,0 +1,13 @@
+CC = gcc
+CFLAGS = -Wall
+
+all: main slave
+
+main: main.c
+	$(CC) $(CFLAGS) -o main main.c
+
+hijo: hijo.c
+	$(CC) $(CFLAGS) -o slave slave.c
+
+clean:
+	rm -f main slave

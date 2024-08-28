@@ -1,8 +1,10 @@
 #include <stdio.h>
+#include <unistd.h>
+#include <stdlib.h>
 
 #define     SLAVE_QTY       5
 
-int main(int argc, char const *argv[]) {
+int main(int argc, char *argv[]) {
     int pid;
     for(int i = 1; i <= SLAVE_QTY; i++){
         pid = fork();
