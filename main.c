@@ -4,6 +4,8 @@
 
 #define     SLAVE_QTY       5
 
+//prueba brunch
+
 int main(int argc, char *argv[]) {
     int pid;
     for(int i = 1; i <= SLAVE_QTY; i++){
