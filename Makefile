@@ -1,13 +1,16 @@
 CC = gcc
-CFLAGS = -Wall
+CFLAGS = -Wall -g
 
-all: main slave
+all: main view
 
-main: main.c
-	$(CC) $(CFLAGS) -o main main.c
+main: main.c globals.o
+	$(CC) $(CFLAGS) -o main main.c globals.o
 
-hijo: hijo.c
-	$(CC) $(CFLAGS) -o slave slave.c
+view: view.c globals.o
+	$(CC) $(CFLAGS) -o view view.c globals.o
+
+globals.o: globals.c globals.h
+	$(CC) $(CFLAGS) -c globals.c
 
 clean:
-	rm -f main slave
+	rm -f main view globals.o
