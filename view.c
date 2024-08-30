@@ -7,9 +7,12 @@
 #include <sys/mman.h>  // Biblioteca necesaria para mmap y shm_open
 #include <unistd.h>  // Biblioteca necesaria para ftruncate
 #include <sys/stat.h>
+#include <semaphore.h>
 #include "globals.h"
 
 #define SHARED_MEMORY_PERMISSIONS   0666
+#define SEMAPHORE_PERMISSIONS       0664
+
 #define SHARED_MEMORY_SIZE          4096
 
 void* startSharedMemory(void);
@@ -17,11 +20,30 @@ void endSharedMemory(void* ptr);
 
 int main(int argc, char const *argv[])
 {
+    sem_t *sem = sem_open(SEMAPHORE_NAME, O_CREAT, SEMAPHORE_PERMISSIONS, 1);
+    if (sem == SEM_FAILED) {
+        perror("Error abriendo el semáforo desde view");
+        exit(EXIT_FAILURE);
+    }
+
+
+    int semValue = 0;
+    printf("Esperando al main");
+    while (semValue == 0) {
+        printf(".");
+        sleep(1);
+        sem_getvalue(sem, &semValue);
+    }
+
+    printf(" Libres!\n");
+
     void* shm_view_ptr = startSharedMemory();
     printf("Todo correctamente inicializado\n");
     // sprintf(shm_view_ptr, "Hola a todos!\n");
     printf("Lo que hay en el bloque compartido es: %s", (char*) shm_view_ptr);
     endSharedMemory(shm_view_ptr);
+    sem_close(sem);
+    sem_destroy(sem);
     return 0;
 }
 

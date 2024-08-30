@@ -9,8 +9,13 @@
 #include <stdlib.h>
 #include <sys/mman.h>  // Biblioteca necesaria para mmap y shm_open
 #include <sys/stat.h>
+#include <semaphore.h>
+
+#include <time.h>
 
 #define SHARED_MEMORY_PERMISSIONS   0666
+#define SEMAPHORE_PERMISSIONS   0664
+
 #define SHARED_MEMORY_SIZE          4096
 
 #define     SLAVE_QTY       5
@@ -18,6 +23,26 @@
 void viewTesting(void);
 int main(int argc, char *argv[]) {
     viewTesting();
+    sem_t *sem = sem_open(SEMAPHORE_NAME, O_CREAT, SEMAPHORE_PERMISSIONS, 1);
+    if (sem == SEM_FAILED) {
+        perror("Error abriendo el semáforo desde main");
+        exit(EXIT_FAILURE);
+    }
+
+    for (size_t i = 0; i < 100; i++) {
+        printf(":p [%d]\n", i);
+        
+        // Dormir por 100 milisegundos
+        struct timespec ts;
+        ts.tv_sec = 0;
+        ts.tv_nsec = 100 * 100000L; // 100 milisegundos en nanosegundos
+        nanosleep(&ts, NULL);
+    }
+    sem_post(sem);
+
+    printf("Lalalala");
+
+    sem_close(sem);
     // int pid;
     // for(int i = 1; i <= SLAVE_QTY; i++){
     //     pid = fork();
