@@ -3,3 +3,5 @@
 *.ko
 *.obj
 *.elf
+main
+slave
