@@ -6,7 +6,7 @@ all: main slave
 main: main.c
 	$(CC) $(CFLAGS) -o main main.c
 
-hijo: hijo.c
+slave: slave.c
 	$(CC) $(CFLAGS) -o slave slave.c
 
 clean:
