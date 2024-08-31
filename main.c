@@ -25,7 +25,7 @@ typedef struct {
 
 void sendFile (int pipe_fd, char *arg);
 void sendFiles(int pipe_fd, char *arg[], int qty);
-void setup_slaves(TSlaveInfo* slavesInfo, fd_set* fdSet, int files);
+void setup_slaves(TSlaveInfo* slavesInfo, fd_set* fdSet, int slotSize);
 
 void printPipeStatuses(TSlaveInfo slavesInfo[]);
 
@@ -39,17 +39,17 @@ int main(int argc, char *argv[]) {
         return 1;
     }
 
-    int initial_files_qty = total_files * PERCENTAJE_INITIAL;
+    int slot_files_qty = total_files * PERCENTAJE_INITIAL;
 
-    if (initial_files_qty == 0) {
-        initial_files_qty = SLAVE_QTY;
+    if (slot_files_qty == 0) {
+        slot_files_qty = SLAVE_QTY; // De no haber suficientes archivos, entonces cada esclavo procesará uno único
     }
 
-    int files_per_slave = initial_files_qty / SLAVE_QTY;
-    int remaining_files = total_files - initial_files_qty;
+    int files_per_slave = slot_files_qty / SLAVE_QTY;
+    int remaining_files = total_files - slot_files_qty;
 
     printf("Total files: %d\n", total_files);
-    printf("Initial files: %d\n", initial_files_qty);
+    printf("Initial files: %d\n", slot_files_qty);
     printf("Files per slave: %d\n", files_per_slave);
     printf("Remaining files: %d\n", remaining_files);
 
@@ -91,7 +91,7 @@ int main(int argc, char *argv[]) {
         sendFile(slavesInfo[i].pipes[APP_TO_SLAVE].fdW, i_str);
     }
 
-    while (0 == 0) { // TODO Reemplazar por la condición de no haber leido de todos
+    while (current_index < total_files) { // TODO Reemplazar por la condición de no haber leido de todos
         // Dado que select es destructivo, debemos hacer una copia de seguridad del set de FDs
         // ! Se considera que el mayor fdR estará siempre en el último pipe. ¿Es correcto?
         fd_set fdSetCopy = fdSet;
@@ -146,7 +146,7 @@ void printPipeStatuses(TSlaveInfo slavesInfo[]) {
     }
 }
 
-void setup_slaves(TSlaveInfo* slavesInfo, fd_set* fdSet, int files) {
+void setup_slaves(TSlaveInfo* slavesInfo, fd_set* fdSet, int slotSize) {
     for (int i = 0; i < SLAVE_QTY; i++) {
         int pipe1[2];
         if (pipe(pipe1) == -1) {  // Pipe main->slave
@@ -167,7 +167,7 @@ void setup_slaves(TSlaveInfo* slavesInfo, fd_set* fdSet, int files) {
 
         FD_SET(pipe2[R_END], fdSet); // Agregamos este file descriptor para que se lo tenga en cuenta a la hora de escuchar cambios
 
-        slavesInfo[i].filesToProcess = files;
+        slavesInfo[i].filesToProcess = slotSize;
     }
 }
 
