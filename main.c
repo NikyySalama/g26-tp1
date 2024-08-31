@@ -5,7 +5,7 @@
 #include <sys/select.h>
 #include <string.h>
 
-#define     SLAVE_QTY           5
+#define     SLAVE_QTY           10
 #define     PERCENTAJE_INITIAL  0.1
 #define     W_END               1
 #define     R_END               0
@@ -25,13 +25,14 @@ typedef struct {
 
 void sendFile (int pipe_fd, char *arg);
 void sendFiles(int pipe_fd, char *arg[], int qty);
-void setup_slaves(TSlaveInfo* slavesInfo, int files);
+void setup_slaves(TSlaveInfo* slavesInfo, fd_set* fdSet, int files);
 
 void printPipeStatuses(TSlaveInfo slavesInfo[]);
 
 int main(int argc, char *argv[]) {
     int total_files = argc - 1;
     TSlaveInfo slavesInfo[SLAVE_QTY];
+    fd_set fdSet; // Set de todos los descriptores
 
     if(total_files == 0){
         printf("no se ingresaron archivos a procesar\n");
@@ -47,12 +48,12 @@ int main(int argc, char *argv[]) {
     int files_per_slave = initial_files_qty / SLAVE_QTY;
     int remaining_files = total_files - initial_files_qty;
 
-    // printf("Total files: %d\n", total_files);
-    // printf("Initial files: %d\n", initial_files_qty);
-    // printf("Files per slave: %d\n", files_per_slave);
-    // printf("Remaining files: %d\n", remaining_files);
+    printf("Total files: %d\n", total_files);
+    printf("Initial files: %d\n", initial_files_qty);
+    printf("Files per slave: %d\n", files_per_slave);
+    printf("Remaining files: %d\n", remaining_files);
 
-    setup_slaves(slavesInfo, files_per_slave);
+    setup_slaves(slavesInfo, &fdSet, files_per_slave);
     // printPipeStatuses(slavesInfo);
     
     int current_index = 1; // indice del archivo a procesar
@@ -90,19 +91,45 @@ int main(int argc, char *argv[]) {
         sendFile(slavesInfo[i].pipes[APP_TO_SLAVE].fdW, i_str);
     }
 
-    for (int i = 0; i < SLAVE_QTY; i++) {
-        TSlaveInfo currentSlave = slavesInfo[i];
-        printf("Slave N%d:\n", i+1);
-        printf("\t- Mensaje SLAVE->APP: ");
-        char buffer[10];
-        int bytesRead = read(currentSlave.pipes[SLAVE_TO_APP].fdR, buffer, 10);
-        if (bytesRead == -1) {
-            printf("Error leyendo el pipe de %d!\n", i);
-            perror("read");
+    while (0 == 0) { // TODO Reemplazar por la condición de no haber leido de todos
+        // Dado que select es destructivo, debemos hacer una copia de seguridad del set de FDs
+        fd_set fdSetCopy = fdSet;
+        if (select(FD_SETSIZE, &fdSet, NULL, NULL, NULL) < 0) {
+            perror("Error con el select de FDs");
             exit(EXIT_FAILURE);
         }
-        printf(buffer);
-        printf("\n");
+
+        for (int i = slavesInfo[0].pipes[SLAVE_TO_APP].fdR; i < slavesInfo[SLAVE_QTY-1].pipes[SLAVE_TO_APP].fdR+1; i++) { // El máximo fd lo tendrá el último pipe
+            if (FD_ISSET(i, &fdSetCopy)) {
+                printf("El FD %d tiene data: ", i);
+                char buffer[10];
+                int bytesRead = read(i, buffer, 10);
+                if (bytesRead == -1) {
+                    printf("Error leyendo el pipe de %d\n", i);
+                    perror("read");
+                    exit(EXIT_FAILURE);
+                }
+                printf(buffer);
+                printf("\n");
+        
+                FD_CLR(i, &fdSet); // No lo seguimos escuchando (por el momento)
+            }
+        }
+
+        // for (int i = 0; i < SLAVE_QTY; i++) {
+        //     TSlaveInfo currentSlave = slavesInfo[i];
+        //     printf("Slave N%d:\n", i+1);
+        //     printf("\t- Mensaje SLAVE->APP: ");
+        //     char buffer[10];
+        //     int bytesRead = read(currentSlave.pipes[SLAVE_TO_APP].fdR, buffer, 10);
+        //     if (bytesRead == -1) {
+        //         printf("Error leyendo el pipe de %d!\n", i);
+        //         perror("read");
+        //         exit(EXIT_FAILURE);
+        //     }
+        //     printf(buffer);
+        //     printf("\n");
+        // }
     }
     return 0;
 }
@@ -118,7 +145,7 @@ void printPipeStatuses(TSlaveInfo slavesInfo[]) {
     }
 }
 
-void setup_slaves(TSlaveInfo* slavesInfo, int files) {
+void setup_slaves(TSlaveInfo* slavesInfo, fd_set* fdSet, int files) {
     for (int i = 0; i < SLAVE_QTY; i++) {
         int pipe1[2];
         if (pipe(pipe1) == -1) {  // Pipe main->slave
@@ -136,6 +163,8 @@ void setup_slaves(TSlaveInfo* slavesInfo, int files) {
 
         slavesInfo[i].pipes[SLAVE_TO_APP].fdR = pipe2[R_END];
         slavesInfo[i].pipes[SLAVE_TO_APP].fdW = pipe2[W_END];
+
+        FD_SET(pipe2[R_END], fdSet); // Agregamos este file descriptor para que se lo tenga en cuenta a la hora de escuchar cambios
 
         slavesInfo[i].filesToProcess = files;
     }
