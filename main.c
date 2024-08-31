@@ -116,7 +116,6 @@ void printPipeStatuses(TSlaveInfo slavesInfo[]) {
         printf("Files to process: %d\n", currentSlave.filesToProcess);
         printf("\n");
     }
-    
 }
 
 void setup_slaves(TSlaveInfo* slavesInfo, int files) {
@@ -149,10 +148,3 @@ void sendFile(int pipe_fd, char *arg) {
     }
     write(pipe_fd, "\n", 1);
 }
-
-/* void sendFiles(int pipe_fd, char *arg[], int qty){
-    for (int i = 0; i < qty; i++)
-    {
-        sendFile(pipe_fd, arg[i]);
-    }
-} no uso por ahora*/
