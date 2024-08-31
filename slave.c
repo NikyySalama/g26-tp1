@@ -8,6 +8,8 @@ int main(int argc, char *argv[]) {
     char buffer[BUFFER_SIZE];
     ssize_t bytes_read;
 
+    printf("execve realizado\n");
+
     bytes_read = read(STDIN_FILENO, buffer, sizeof(buffer) - 1);
     if (bytes_read > 0) {
         buffer[bytes_read] = '\0';
@@ -15,10 +17,6 @@ int main(int argc, char *argv[]) {
     } else if (bytes_read == -1) {
         perror("Error al leer de stdin");
         exit(EXIT_FAILURE);
-    }
-
-    printf("execve realizado\n");
-    
-    
+    }    
     return 0;
 }
