@@ -13,15 +13,15 @@
 
 #include <time.h>
 
-#define SHARED_MEMORY_PERMISSIONS   0666
-#define SEMAPHORE_PERMISSIONS   0664
+#define SHARED_MEMORY_PERMISSIONS           0666
+#define SEMAPHORE_PERMISSIONS               0664
 
-#define SHARED_MEMORY_SIZE          4096
+#define SHARED_MEMORY_SIZE                  4096
 
 #define     SLAVE_QTY       5
 
 int main(int argc, char *argv[]) {
-    void* shm_main_ptr = start_shared_memory();
+    void* shm_main_ptr = start_shared_memory(SHARED_MEMORY_NAME);
     sem_t *sem = sem_open(SEMAPHORE_NAME, O_CREAT, SEMAPHORE_PERMISSIONS, 0);
     if (sem == SEM_FAILED) {
         perror("Error abriendo el semáforo desde main");

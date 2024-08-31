@@ -12,15 +12,15 @@
 
 #define SEMAPHORE_PERMISSIONS       0664
 
-int main(int argc, char const *argv[])
-{
-    void* shm_view_ptr = start_shared_memory();
+int main(int argc, char const *argv[]) {
+    // Modificar el recibo del SHMNAME
+    void* shm_view_ptr = start_shared_memory(SHARED_MEMORY_NAME);
     sem_t *sem = sem_open(SEMAPHORE_NAME, O_CREAT, SEMAPHORE_PERMISSIONS, 1);
     if (sem == SEM_FAILED) {
         perror("Error abriendo el semáforo desde view");
         exit(EXIT_FAILURE);
     }
-    int hits = 0;
+    int hits = 0;   
 
     while (hits <= 5) {
         sem_wait(sem);

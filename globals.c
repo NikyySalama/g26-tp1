@@ -12,8 +12,8 @@
 #define SHARED_MEMORY_PERMISSIONS   0666
 
 
-void* start_shared_memory(void){
-    int shm_fd = shm_open(SHARED_MEMORY_NAME, O_CREAT | O_RDWR, SHARED_MEMORY_PERMISSIONS);
+void* start_shared_memory(char* name){
+    int shm_fd = shm_open(name, O_CREAT | O_RDWR, SHARED_MEMORY_PERMISSIONS);
     if (shm_fd == -1) {
         // TODO coordinar que hacemos ante error
         perror("Error al abrir el bloque de memoria compartida main-view");
