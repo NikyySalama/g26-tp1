@@ -5,7 +5,7 @@
 #include <sys/select.h>
 #include <string.h>
 
-#define     SLAVE_QTY           10
+#define     SLAVE_QTY           5
 #define     PERCENTAJE_INITIAL  0.1
 #define     W_END               1
 #define     R_END               0
@@ -93,8 +93,9 @@ int main(int argc, char *argv[]) {
 
     while (0 == 0) { // TODO Reemplazar por la condición de no haber leido de todos
         // Dado que select es destructivo, debemos hacer una copia de seguridad del set de FDs
+        // ! Se considera que el mayor fdR estará siempre en el último pipe. ¿Es correcto?
         fd_set fdSetCopy = fdSet;
-        if (select(FD_SETSIZE, &fdSet, NULL, NULL, NULL) < 0) {
+        if (select(slavesInfo[SLAVE_QTY-1].pipes[SLAVE_TO_APP].fdR+1, &fdSet, NULL, NULL, NULL) < 0) {
             perror("Error con el select de FDs");
             exit(EXIT_FAILURE);
         }
