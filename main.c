@@ -10,19 +10,28 @@
 #define     W_END               1
 #define     R_END               0
 
+#define     APP_TO_SLAVE        0
+#define     SLAVE_TO_APP        1
+
+typedef struct {
+    int fdR;
+    int fdW;
+} TPipe;
+
+typedef struct {
+    TPipe pipes[2];
+    int filesToProcess;
+} TSlaveInfo;
+
 void sendFile (int pipe_fd, char *arg);
 void sendFiles(int pipe_fd, char *arg[], int qty);
-void setup_pipes(int pipes[SLAVE_QTY][2][2]);
+void setup_pipes(TSlaveInfo* slavesInfo);
 
-struct slaveInfo {
-    int pipe[2][2];
-    int filesToProcess;
-};
+void printPipeStatuses(TSlaveInfo slavesInfo[]);
 
 int main(int argc, char *argv[]) {
-    int pipes[SLAVE_QTY][2][2];
-    int pid;
     int total_files = argc - 1;
+    TSlaveInfo slavesInfo[SLAVE_QTY];
 
     if(total_files == 0){
         printf("no se ingresaron archivos a procesar\n");
@@ -30,59 +39,51 @@ int main(int argc, char *argv[]) {
     }
 
     int initial_files_qty = total_files * PERCENTAJE_INITIAL;
-    if (initial_files_qty == 0)
-    {
+
+    if (initial_files_qty == 0) {
         initial_files_qty = SLAVE_QTY;
     }
 
     int files_per_slave = initial_files_qty / SLAVE_QTY;
     int remaining_files = total_files - initial_files_qty;
 
-    printf("total files: %d\n", total_files);
-    printf("initial files: %d\n", initial_files_qty);
-    printf("files per slave: %d\n", files_per_slave);
-    printf("remaining files: %d\n", remaining_files);
+    printf("Total files: %d\n", total_files);
+    printf("Initial files: %d\n", initial_files_qty);
+    printf("Files per slave: %d\n", files_per_slave);
+    printf("Remaining files: %d\n", remaining_files);
 
-    setup_pipes(pipes);
+    setup_pipes(slavesInfo);
+    printPipeStatuses(slavesInfo);
     
     int current_index = 1; // indice del archivo a procesar
 
     for(int i = 0; i < SLAVE_QTY && i < initial_files_qty ; i++){
-        pid = fork();
+        int pid = fork();
 
         if(pid < 0) {
             perror("Error al crear el proceso");
             return 1;
         } else if (pid == 0) { // Este es el proceso hijo
-            // pipes[i][0] de main a slave
-            // pipes[i][1] de slave a main
-            close(pipes[i][0][W_END]); 
-            close(pipes[i][1][R_END]);
+            dup2(slavesInfo[i].pipes[APP_TO_SLAVE].fdR, STDIN_FILENO); // Lo que escriba la app se redirige a STDIN para que el eslcavo lo levante de ahi            
+            close(slavesInfo[i].pipes[APP_TO_SLAVE].fdR);
 
-            close(STDIN_FILENO);
-            dup2(pipes[i][0][R_END], STDIN_FILENO);
-            close(pipes[i][0][R_END]);
-
-            //para ver la salida del hijo, comentar el pipeo de su salida
-            close(STDOUT_FILENO);
-            dup2(pipes[i][1][W_END], STDOUT_FILENO);
-            close(pipes[i][1][W_END]);
+            dup2(slavesInfo[i].pipes[SLAVE_TO_APP].fdW, STDOUT_FILENO); // El proceso slave escribe en STDOUT, y queremos que esto se pipee al fdW correspondiente
+            close(slavesInfo[i].pipes[SLAVE_TO_APP].fdW);
 
             char *args[] = {"./slave", NULL};
             execve(args[0], args, NULL);
-            perror("Error al ejecutar el proceso hijo"); // si execve falla
-            exit(EXIT_FAILURE); // Salir si execve falla
+
+            // Ante un fallo de execve
+            perror("Error al ejecutar el proceso hijo");
+            exit(EXIT_FAILURE);
         }
-        // Proceso padre
-        close(pipes[i][0][R_END]);
-        close(pipes[i][1][W_END]);
     }
 
     // se envian los archivos iniciales
     for (int i = 0; i < SLAVE_QTY; i++) {
         for (int j = 0; j < files_per_slave; j++) {
             if (current_index <= total_files) {
-                sendFile(pipes[i][0][1], argv[current_index]);
+                sendFile(slavesInfo[i].pipes[APP_TO_SLAVE].fdW, argv[current_index]);
                 current_index++;
             }
         }
@@ -98,16 +99,36 @@ int main(int argc, char *argv[]) {
     return 0;
 }
 
-void setup_pipes(int pipes[SLAVE_QTY][2][2]) {
+void printPipeStatuses(TSlaveInfo slavesInfo[]) {
     for (int i = 0; i < SLAVE_QTY; i++) {
-        if (pipe(pipes[i][0]) == -1) {  // Pipe main->slave
-            perror("Error al crear el pipe main->slave");
+        TSlaveInfo currentSlave = slavesInfo[i];
+        printf("Slave N%d:\n", i+1);
+        printf("\t- Pipe APP->SLAVE: R[%d] W[%d]\n", currentSlave.pipes[APP_TO_SLAVE].fdR, currentSlave.pipes[APP_TO_SLAVE].fdW);
+        printf("\t- Pipe SLAVE->APP: R[%d] W[%d]\n", currentSlave.pipes[SLAVE_TO_APP].fdR, currentSlave.pipes[SLAVE_TO_APP].fdW);
+        printf("Files to process: %d\n", currentSlave.filesToProcess);
+        printf("\n");
+    }
+    
+}
+
+void setup_pipes(TSlaveInfo* slavesInfo) {
+    for (int i = 0; i < SLAVE_QTY; i++) {
+        int pipe1[2];
+        if (pipe(pipe1) == -1) {  // Pipe main->slave
+            perror("Error al crear el pipe app->slave");
             exit(EXIT_FAILURE);
         }
-        if (pipe(pipes[i][1]) == -1) {  // Pipe slave->main
-            perror("Error al crear el pipe slave->main");
+        slavesInfo[i].pipes[APP_TO_SLAVE].fdR = pipe1[R_END];
+        slavesInfo[i].pipes[APP_TO_SLAVE].fdW = pipe1[W_END];
+
+        int pipe2[2];
+        if (pipe(pipe2) == -1) {  // Pipe slave->main
+            perror("Error al crear el pipe slave->app");
             exit(EXIT_FAILURE);
         }
+
+        slavesInfo[i].pipes[SLAVE_TO_APP].fdR = pipe2[R_END];
+        slavesInfo[i].pipes[SLAVE_TO_APP].fdW = pipe2[W_END];
     }
 }
 
