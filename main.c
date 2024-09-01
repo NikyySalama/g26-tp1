@@ -100,19 +100,28 @@ int main(int argc, char *argv[]) {
             exit(EXIT_FAILURE);
         }
 
-        for (int i = slavesInfo[0].pipes[SLAVE_TO_APP].fdR; i < slavesInfo[SLAVE_QTY-1].pipes[SLAVE_TO_APP].fdR+1; i++) { // El máximo fd lo tendrá el último pipe
-            if (FD_ISSET(i, &fdSetCopy)) {
-                printf("El FD %d tiene data: ", i);
+        for (int i = 0; i < SLAVE_QTY; i++) { // El máximo fd lo tendrá el último pipe
+            int fdSlave = slavesInfo[i].pipes[SLAVE_TO_APP].fdR;
+            if (FD_ISSET(fdSlave, &fdSetCopy)) {
+                printf("El FD %d tiene data: ", fdSlave);
                 char buffer[10];
-                int bytesRead = read(i, buffer, 10);
+                int bytesRead = read(fdSlave, buffer, 10);
                 if (bytesRead == -1) {
-                    printf("Error leyendo el pipe de %d\n", i);
+                    printf("Error leyendo el pipe de %d\n", fdSlave);
                     perror("read");
                     exit(EXIT_FAILURE);
                 }
                 printf(buffer);
                 printf("\n");
-        
+                
+                // TODO: identificar cuantos files proceso el slave
+                slavesInfo[i].filesToProcess--; //el slave ya proceso un archivo
+                if(slavesInfo[i].filesToProcess == 0){// el slave ya no tiene archivos a procesar
+                    current_index++;
+                    if(current_index <= total_files+1)
+                        sendFile(slavesInfo[i].pipes[APP_TO_SLAVE].fdW, argv[current_index]);
+                }
+                
                 FD_CLR(i, &fdSet); // No lo seguimos escuchando (por el momento)
             }
         }
