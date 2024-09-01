@@ -4,15 +4,18 @@
 #include <unistd.h>
 #include <stdlib.h>
 
-#define BUFFER_SIZE 1024
+#define BUFFER_SIZE 32
 
 int main(int argc, char *argv[]) {
-    srand(time(NULL)^ getpid());
-    int random_time = (rand() % 5) + 1;
+    //srand(time(NULL)^ getpid());
+    //int random_time = (rand() % 5) + 1;
     char buffer[BUFFER_SIZE];
-    sleep(random_time);
-
-    while(read(STDIN_FILENO, buffer, sizeof(buffer))) {
-        printf("RESULT %s", buffer);
+    //sleep(random_time);
+    
+    while (fgets(buffer, BUFFER_SIZE, stdin) != NULL) {
+        printf("RESULT %s\n", buffer);
+        fflush(stdout);
     }
+
+    return 0;
 }
