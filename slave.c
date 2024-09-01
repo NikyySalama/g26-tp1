@@ -12,7 +12,7 @@ int main(int argc, char *argv[]) {
     char buffer[BUFFER_SIZE];
     sleep(random_time);
 
-    if (read(STDIN_FILENO, buffer, sizeof(buffer))) {
+    while(read(STDIN_FILENO, buffer, sizeof(buffer))) {
         printf("RESULT %s", buffer);
     }
     return 0;
