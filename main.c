@@ -93,7 +93,6 @@ int main(int argc, char *argv[]) {
     }
 
     while (current_index < total_files) { // TODO Reemplazar por la condición de no haber leido de todos
-        // Dado que select es destructivo, debemos hacer una copia de seguridad del set de FDs
         // ! Se considera que el mayor fdR estará siempre en el último pipe. ¿Es correcto?
         fd_set fdSet;
         FD_ZERO(&fdSet);
@@ -102,16 +101,16 @@ int main(int argc, char *argv[]) {
             FD_SET(slavesInfo[i].pipes[SLAVE_TO_APP].fdR, &fdSet); // Agregamos este file descriptor para que se lo tenga en cuenta a la hora de escuchar cambios
         }
 
-        struct timeval pupi;
-        pupi.tv_sec = 1;
-        pupi.tv_usec = 0;
+        struct timeval timeout;
+        timeout.tv_sec = 0;
+        timeout.tv_usec = 500000;
 
-        if (select(slavesInfo[SLAVE_QTY-1].pipes[SLAVE_TO_APP].fdR+1, &fdSet, NULL, NULL, &pupi) < 0) {
+        if (select(slavesInfo[SLAVE_QTY-1].pipes[SLAVE_TO_APP].fdR+1, &fdSet, NULL, NULL, &timeout) < 0) {
             perror("Error con el select de FDs");
             exit(EXIT_FAILURE);
         }
 
-        for (int i = 0; i < SLAVE_QTY; i++) { // El máximo fd lo tendrá el último pipe
+        for (int i = 0; i < SLAVE_QTY; i++) {
             int fdSlave = slavesInfo[i].pipes[SLAVE_TO_APP].fdR;
             if (FD_ISSET(fdSlave, &fdSet)) {
                 printf("El FD %d tiene data: ", fdSlave);
@@ -135,7 +134,6 @@ int main(int argc, char *argv[]) {
                         sendFile(slavesInfo[i].pipes[APP_TO_SLAVE].fdW, argv[current_index]);
                 }
             }
-            //FD_CLR(fdSlave, &fdSet);
         }
 
         // for (int i = 0; i < SLAVE_QTY; i++) {
