@@ -15,5 +15,4 @@ int main(int argc, char *argv[]) {
     while(read(STDIN_FILENO, buffer, sizeof(buffer))) {
         printf("RESULT %s", buffer);
     }
-    return 0;
 }
