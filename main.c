@@ -10,7 +10,7 @@
 #define     PERCENTAJE_INITIAL  0.1
 #define     W_END               1
 #define     R_END               0
-#define     BUFFER_SIZE         32
+#define     BUFFER_SIZE         33
  //((32+1)*4)
 
 #define     APP_TO_SLAVE        0
@@ -32,6 +32,8 @@ void setup_slaves(TSlaveInfo* slavesInfo, int slotSize);
 
 void printPipeStatuses(TSlaveInfo slavesInfo[]);
 
+int current_index = 1; // indice del archivo a procesar
+
 int main(int argc, char *argv[]) {
     int total_files = argc - 1;
     TSlaveInfo slavesInfo[SLAVE_QTY];\
@@ -41,21 +43,19 @@ int main(int argc, char *argv[]) {
         return 1;
     }
 
-    int slot_files_qty = total_files * PERCENTAJE_INITIAL;
+    int initial_files_qty = total_files * PERCENTAJE_INITIAL;
 
-    if (slot_files_qty == 0) {
-        slot_files_qty = SLAVE_QTY; // De no haber suficientes archivos, entonces cada esclavo procesará uno único
+    if (initial_files_qty == 0) {
+        initial_files_qty = SLAVE_QTY; // De no haber suficientes archivos, entonces cada esclavo procesará uno único
     }
 
-    int files_per_slave = slot_files_qty / SLAVE_QTY;
-    //int remaining_files = total_files - slot_files_qty;
+    int files_per_slave = initial_files_qty / SLAVE_QTY;
+    int remaining_files = total_files;
 
     printf("Total files: %d\n", total_files);
-    printf("Initial files: %d\n", slot_files_qty);
+    printf("Initial files: %d\n", initial_files_qty);
     printf("Files per slave: %d\n", files_per_slave);
-    //printf("Remaining files: %d\n", remaining_files);
-
-    int current_index = 1; // indice del archivo a procesar
+    printf("Remaining files: %d\n", remaining_files);
 
     setup_slaves(slavesInfo, files_per_slave);
     //printPipeStatuses(slavesInfo);
@@ -89,10 +89,9 @@ int main(int argc, char *argv[]) {
     // Envio de datos
     for (int i = 0; i < SLAVE_QTY; i++) {
         sendFile(slavesInfo[i].pipes[APP_TO_SLAVE].fdW, argv[current_index]);
-        current_index++;
     }
 
-    while (current_index < total_files) { // TODO Reemplazar por la condición de no haber leido de todos
+    while (remaining_files > 0) { // TODO Reemplazar por la condición de no haber leido de todos
         // ! Se considera que el mayor fdR estará siempre en el último pipe. ¿Es correcto?
         fd_set fdSet;
         FD_ZERO(&fdSet);
@@ -113,25 +112,35 @@ int main(int argc, char *argv[]) {
         for (int i = 0; i < SLAVE_QTY; i++) {
             int fdSlave = slavesInfo[i].pipes[SLAVE_TO_APP].fdR;
             if (FD_ISSET(fdSlave, &fdSet)) {
-                printf("El FD %d tiene data: ", fdSlave);
-                char buffer[BUFFER_SIZE];
-                sleep(1);
 
-                int bytesRead = read(fdSlave, buffer, BUFFER_SIZE); //lee hasta un \n
+                ssize_t bytesRead;
+                while (slavesInfo[i].filesToProcess > 0){ //lee un md5 mas un \n
+                    printf("El FD %d tiene data: ", fdSlave);
+                    char buffer[BUFFER_SIZE];
+
+                    bytesRead = read(fdSlave, buffer, BUFFER_SIZE);
+                    printf(buffer);
+                    printf("\n");
+                    remaining_files--;
+                    slavesInfo[i].filesToProcess--; //el slave ya proceso un archivo
+                }
                 if (bytesRead == -1) {
                     printf("Error leyendo el pipe de %d\n", fdSlave);
                     perror("read");
                     exit(EXIT_FAILURE);
                 }
-                printf(buffer);
-                printf("\n");
                 
-                // TODO: identificar cuantos files proceso el slave
-                current_index++;
-                slavesInfo[i].filesToProcess--; //el slave ya proceso un archivo
                 if(slavesInfo[i].filesToProcess == 0){// el slave ya no tiene archivos a procesar
-                    if(current_index <= total_files+1)
+                    if(current_index <= total_files){
                         sendFile(slavesInfo[i].pipes[APP_TO_SLAVE].fdW, argv[current_index]);
+                        slavesInfo[i].filesToProcess++;
+                    } else{ // no hay mas files para procesar
+                        close(slavesInfo[i].pipes[APP_TO_SLAVE].fdR);
+                        close(slavesInfo[i].pipes[APP_TO_SLAVE].fdW);
+                        close(slavesInfo[i].pipes[SLAVE_TO_APP].fdR);
+                        // no es necesario cerrar slavesInfo[i].pipes[SLAVE_TO_APP].fdW porque se cierra automaticamente
+                        // con la muerte del slave
+                    }
                 }
             }
         }
@@ -194,4 +203,5 @@ void sendFile(int pipe_fd, char *arg) {
         exit(1);
     }
     write(pipe_fd, "\n", 1);
+    current_index++;
 }
