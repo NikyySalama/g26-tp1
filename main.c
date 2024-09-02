@@ -204,6 +204,7 @@ void setup_slaves(TSlaveInfo* slavesInfo, int slotSize) {
         slavesInfo[i].pipes[SLAVE_TO_APP].fdW = pipe2[W_END];
     
         slavesInfo[i].filesToProcess = slotSize;
+
     }
 }
 
