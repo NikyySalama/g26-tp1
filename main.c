@@ -80,7 +80,7 @@ int main(int argc, char *argv[]) {
             dup2(slavesInfo[i].pipes[SLAVE_TO_APP].fdW, STDOUT_FILENO); // El proceso slave escribe en STDOUT, y queremos que esto se pipee al fdW correspondiente
             close(slavesInfo[i].pipes[SLAVE_TO_APP].fdW);
 
-            char *args[] = {"./slave", NULL};
+            char *args[] = {"./slave.o", NULL};
             execve(args[0], args, NULL);
 
             // Ante un fallo de execve
@@ -154,8 +154,6 @@ int main(int argc, char *argv[]) {
         // for(int s = 0; s < SLAVE_QTY; s++) {
         //     printf("[%d]: %d |", s+1, slavesInfo[s].filesToProcess);
         // }
-
-        printf("\n");
 
         // for (int i = 0; i < SLAVE_QTY; i++) {
         //     TSlaveInfo currentSlave = slavesInfo[i];
