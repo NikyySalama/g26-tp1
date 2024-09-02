@@ -1,0 +1,3 @@
+28    execve("/usr/bin/make", ["make", "--privileged"], ["_=/usr/bin/pvs-studio-analyzer", "SHLVL=1", "PWD=/root/SO/TP1", "TERM=xterm", "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin", "OLDPWD=/root", "HOSTNAME=b2aea1744503", "HOME=/root"]) = 0
+28    chdir("/root/SO/TP1")             = 0
+28    +++ exited with 2 +++
