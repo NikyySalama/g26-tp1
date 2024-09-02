@@ -5,6 +5,8 @@
 #include <sys/select.h>
 #include <string.h>
 #include <sys/time.h>
+#include <fcntl.h>
+#include <errno.h>
 
 #define     SLAVE_QTY           5
 #define     PERCENTAJE_INITIAL  0.1
@@ -29,6 +31,7 @@ typedef struct {
 void sendFile (int pipe_fd, char *arg);
 void sendFiles(int pipe_fd, char *arg[], int qty);
 void setup_slaves(TSlaveInfo* slavesInfo, int slotSize);
+int isClosed(int fd);
 
 void printPipeStatuses(TSlaveInfo slavesInfo[]);
 
@@ -88,7 +91,9 @@ int main(int argc, char *argv[]) {
     }
     // Envio de datos
     for (int i = 0; i < SLAVE_QTY; i++) {
-        sendFile(slavesInfo[i].pipes[APP_TO_SLAVE].fdW, argv[current_index]);
+        for(int f = 0; f < files_per_slave; f++) {
+            sendFile(slavesInfo[i].pipes[APP_TO_SLAVE].fdW, argv[current_index]);
+        }
     }
 
     while (remaining_files > 0) { // TODO Reemplazar por la condición de no haber leido de todos
@@ -97,7 +102,7 @@ int main(int argc, char *argv[]) {
         FD_ZERO(&fdSet);
 
         for(int i = 0; i < SLAVE_QTY; i++){
-            FD_SET(slavesInfo[i].pipes[SLAVE_TO_APP].fdR, &fdSet); // Agregamos este file descriptor para que se lo tenga en cuenta a la hora de escuchar cambios
+            if (! isClosed(slavesInfo[i].pipes[SLAVE_TO_APP].fdR)) FD_SET(slavesInfo[i].pipes[SLAVE_TO_APP].fdR, &fdSet); // Agregamos este file descriptor para que se lo tenga en cuenta a la hora de escuchar cambios
         }
 
         struct timeval timeout;
@@ -130,7 +135,7 @@ int main(int argc, char *argv[]) {
                     exit(EXIT_FAILURE);
                 }
                 
-                if(slavesInfo[i].filesToProcess == 0){// el slave ya no tiene archivos a procesar
+                if(slavesInfo[i].filesToProcess == 0) { // el slave ya no tiene archivos a procesar
                     if(current_index <= total_files){
                         sendFile(slavesInfo[i].pipes[APP_TO_SLAVE].fdW, argv[current_index]);
                         slavesInfo[i].filesToProcess++;
@@ -144,6 +149,13 @@ int main(int argc, char *argv[]) {
                 }
             }
         }
+
+        // printf("Remaining: %d ---- ", remaining_files);
+        // for(int s = 0; s < SLAVE_QTY; s++) {
+        //     printf("[%d]: %d |", s+1, slavesInfo[s].filesToProcess);
+        // }
+
+        printf("\n");
 
         // for (int i = 0; i < SLAVE_QTY; i++) {
         //     TSlaveInfo currentSlave = slavesInfo[i];
@@ -195,6 +207,10 @@ void setup_slaves(TSlaveInfo* slavesInfo, int slotSize) {
     
         slavesInfo[i].filesToProcess = slotSize;
     }
+}
+
+int isClosed(int fd) {
+    return fcntl(fd, F_GETFD) == -1 && errno == EBADF;
 }
 
 void sendFile(int pipe_fd, char *arg) {
