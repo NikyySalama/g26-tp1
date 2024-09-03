@@ -8,9 +8,13 @@
 #include <sys/stat.h>
 #include <semaphore.h>
 
-#define SHARED_MEMORY_SIZE          4096
+#define SHARED_MEMORY_SIZE          sizeof(TSharedData) * 100 // Almacenamos los resultados
+// ! Ver si se puede hacer almacenando de a un solo sharedData
+// #define SHARED_MEMORY_SIZE          MD5_SIZE+1 // Solo almacenamos un único resultado por esclavo a la vez
+
 #define SHARED_MEMORY_PERMISSIONS   0666
 
+// TODO hacer una libreria de shared memory 
 
 void* start_shared_memory(char* name){
     int shm_fd = shm_open(name, O_CREAT | O_RDWR, SHARED_MEMORY_PERMISSIONS);
@@ -34,15 +38,15 @@ void* start_shared_memory(char* name){
     return ptr;
 }
 
-void end_shared_memory(void* ptr) {
-    if (munmap(ptr, SHARED_MEMORY_SIZE) == -1) {
+void end_shared_memory(void* ptr, char* name) {
+    if (munmap(ptr, name) == -1) {
         perror("Error al desmapear la memoria compartida");
         exit(EXIT_FAILURE);
     }
 }
 
-void delete_shared_memory(void* ptr) {
-    if (shm_unlink(SHARED_MEMORY_NAME) == -1) {
+void delete_shared_memory(void* ptr, char* name) {
+    if (shm_unlink(name) == -1) {
         perror("Error al eliminar el objeto de memoria compartida");
         exit(EXIT_FAILURE);
     }

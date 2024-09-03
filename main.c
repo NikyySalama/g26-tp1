@@ -7,16 +7,22 @@
 #include <sys/time.h>
 #include <fcntl.h>
 #include <errno.h>
+#include <time.h>
+#include <semaphore.h>
+#include "globals.h"
 
 #define     SLAVE_QTY           5
 #define     PERCENTAJE_INITIAL  0.1
 #define     W_END               1
 #define     R_END               0
-#define     BUFFER_SIZE         33
- //((32+1)*4)
+
+#define     BUFFER_SIZE         MD5_SIZE+1
 
 #define     APP_TO_SLAVE        0
 #define     SLAVE_TO_APP        1
+
+#define     S_WAIT_FOR_VIEW     2
+#define     SHARED_MEMORY_NAME  "/application_view_shared_memory"
 
 typedef struct {
     int fdR;
@@ -39,10 +45,11 @@ int current_index = 1; // indice del archivo a procesar
 
 int main(int argc, char *argv[]) {
     int total_files = argc - 1;
-    TSlaveInfo slavesInfo[SLAVE_QTY];\
+    TSlaveInfo slavesInfo[SLAVE_QTY];
 
-    if(total_files == 0){
-        printf("no se ingresaron archivos a procesar\n");
+
+    if(total_files == 0) {
+        perror("No se ingresaron archivos a procesar\n");
         return 1;
     }
 
@@ -55,13 +62,19 @@ int main(int argc, char *argv[]) {
     int files_per_slave = initial_files_qty / SLAVE_QTY;
     int remaining_files = total_files;
 
-    printf("Total files: %d\n", total_files);
-    printf("Initial files: %d\n", initial_files_qty);
-    printf("Files per slave: %d\n", files_per_slave);
-    printf("Remaining files: %d\n", remaining_files);
-
     setup_slaves(slavesInfo, files_per_slave);
-    //printPipeStatuses(slavesInfo);
+
+    TSharedData* shm_main_ptr = start_shared_memory(SHARED_MEMORY_NAME);
+
+    sem_t *sem_main = sem_open(SEMAPHORE_NAME, O_CREAT, SEMAPHORE_PERMISSIONS, 1);
+    if (sem_main == SEM_FAILED) {
+        perror("Error abriendo el semáforo desde view");
+        exit(EXIT_FAILURE);
+    }
+
+    sleep(S_WAIT_FOR_VIEW); // Esperamos a que haya un proceso vista para conectar la salida
+    printf(SHARED_MEMORY_NAME);
+    fflush(stdout);
 
     for(int i = 0; i < SLAVE_QTY; i++){
         int pid = fork();
@@ -84,7 +97,6 @@ int main(int argc, char *argv[]) {
             execve(args[0], args, NULL);
 
             // Ante un fallo de execve
-            printf("Error\n");
             perror("Error al ejecutar el proceso hijo");
             exit(EXIT_FAILURE);
         }
@@ -97,19 +109,14 @@ int main(int argc, char *argv[]) {
     }
 
     while (remaining_files > 0) { // TODO Reemplazar por la condición de no haber leido de todos
-        // ! Se considera que el mayor fdR estará siempre en el último pipe. ¿Es correcto?
         fd_set fdSet;
         FD_ZERO(&fdSet);
 
         for(int i = 0; i < SLAVE_QTY; i++){
-            if (! isClosed(slavesInfo[i].pipes[SLAVE_TO_APP].fdR)) FD_SET(slavesInfo[i].pipes[SLAVE_TO_APP].fdR, &fdSet); // Agregamos este file descriptor para que se lo tenga en cuenta a la hora de escuchar cambios
+            if (!isClosed(slavesInfo[i].pipes[SLAVE_TO_APP].fdR)) FD_SET(slavesInfo[i].pipes[SLAVE_TO_APP].fdR, &fdSet); // Agregamos este file descriptor para que se lo tenga en cuenta a la hora de escuchar cambios
         }
 
-        struct timeval timeout;
-        timeout.tv_sec = 0;
-        timeout.tv_usec = 500000;
-
-        if (select(slavesInfo[SLAVE_QTY-1].pipes[SLAVE_TO_APP].fdR+1, &fdSet, NULL, NULL, &timeout) < 0) {
+        if (select(slavesInfo[SLAVE_QTY-1].pipes[SLAVE_TO_APP].fdR+1, &fdSet, NULL, NULL, NULL) < 0) {
             perror("Error con el select de FDs");
             exit(EXIT_FAILURE);
         }
@@ -120,18 +127,24 @@ int main(int argc, char *argv[]) {
 
                 ssize_t bytesRead;
                 while (slavesInfo[i].filesToProcess > 0){ //lee un md5 mas un \n
-                    printf("El FD %d tiene data: ", fdSlave);
                     char buffer[BUFFER_SIZE];
 
                     bytesRead = read(fdSlave, buffer, BUFFER_SIZE);
-                    printf(buffer);
-                    printf("\n");
+                    // TODO enviar
+                    // printf(buffer);
+                    shm_main_ptr[100-remaining_files].slaveID = i ; // TODO recibir el PID del slave, no el indice del esclavo
+                    
+                    strncpy(shm_main_ptr[100-remaining_files].response, buffer, sizeof(shm_main_ptr[100-remaining_files].response) - 1);
+                    strncpy(shm_main_ptr[100-remaining_files].fileName, argv[100-remaining_files + 1], sizeof(shm_main_ptr[100-remaining_files].response) - 1);
+                    
+                    shm_main_ptr[100-remaining_files].response[sizeof(shm_main_ptr[100-remaining_files].response) - 1] = '\0';
+                    sem_post(sem_main);
+
                     remaining_files--;
                     slavesInfo[i].filesToProcess--; //el slave ya proceso un archivo
                 }
                 if (bytesRead == -1) {
-                    printf("Error leyendo el pipe de %d\n", fdSlave);
-                    perror("read");
+                    perror("Error leyendo el pipe de %d\n");
                     exit(EXIT_FAILURE);
                 }
                 
@@ -149,27 +162,15 @@ int main(int argc, char *argv[]) {
                 }
             }
         }
-
-        // printf("Remaining: %d ---- ", remaining_files);
-        // for(int s = 0; s < SLAVE_QTY; s++) {
-        //     printf("[%d]: %d |", s+1, slavesInfo[s].filesToProcess);
-        // }
-
-        // for (int i = 0; i < SLAVE_QTY; i++) {
-        //     TSlaveInfo currentSlave = slavesInfo[i];
-        //     printf("Slave N%d:\n", i+1);
-        //     printf("\t- Mensaje SLAVE->APP: ");
-        //     char buffer[10];
-        //     int bytesRead = read(currentSlave.pipes[SLAVE_TO_APP].fdR, buffer, 10);
-        //     if (bytesRead == -1) {
-        //         printf("Error leyendo el pipe de %d!\n", i);
-        //         perror("read");
-        //         exit(EXIT_FAILURE);
-        //     }
-        //     printf(buffer);
-        //     printf("\n");
-        // }
     }
+
+    
+    end_shared_memory(shm_main_ptr, SHARED_MEMORY_NAME);
+    delete_shared_memory(shm_main_ptr, SHARED_MEMORY_NAME);
+
+    sem_close(sem_main);
+    sem_destroy(sem_main);
+
     return 0;
 }
 
