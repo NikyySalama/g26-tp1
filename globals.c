@@ -39,7 +39,7 @@ void* start_shared_memory(char* name){
 }
 
 void end_shared_memory(void* ptr, char* name) {
-    if (munmap(ptr, name) == -1) {
+    if (munmap(ptr, SHARED_MEMORY_SIZE) == -1) {
         perror("Error al desmapear la memoria compartida");
         exit(EXIT_FAILURE);
     }
