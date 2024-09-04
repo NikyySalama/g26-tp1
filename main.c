@@ -83,11 +83,13 @@ int main(int argc, char *argv[]) {
             return 1;
         } else if (pid == 0) { // Este es el proceso hijo
 
-            for (int j = 0; j < i; j++) {
-                close(slavesInfo[j].pipes[APP_TO_SLAVE].fdR);
-                close(slavesInfo[j].pipes[APP_TO_SLAVE].fdW);
-                close(slavesInfo[j].pipes[SLAVE_TO_APP].fdR);
-                close(slavesInfo[j].pipes[SLAVE_TO_APP].fdW);
+            for (int j = 0; j < SLAVE_QTY; j++) {
+                if (j != i) { 
+                    close(slavesInfo[j].pipes[APP_TO_SLAVE].fdR);
+                    close(slavesInfo[j].pipes[APP_TO_SLAVE].fdW);
+                    close(slavesInfo[j].pipes[SLAVE_TO_APP].fdR);
+                    close(slavesInfo[j].pipes[SLAVE_TO_APP].fdW);
+                }
             }
         
             close(slavesInfo[i].pipes[APP_TO_SLAVE].fdW);
@@ -173,7 +175,6 @@ int main(int argc, char *argv[]) {
                         slavesInfo[i].filesToProcess++;
                     } else{ // no hay mas files para procesar
                         close(slavesInfo[i].pipes[APP_TO_SLAVE].fdW);
-                        printf("Closed pipe write end for slave %d\n", i);
                         close(slavesInfo[i].pipes[APP_TO_SLAVE].fdR);
                         close(slavesInfo[i].pipes[SLAVE_TO_APP].fdR);
                         // no es necesario cerrar slavesInfo[i].pipes[SLAVE_TO_APP].fdW porque se cierra automaticamente con la muerte del slave

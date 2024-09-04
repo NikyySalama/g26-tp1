@@ -15,7 +15,7 @@ int main(int argc, char *argv[]) {
     
     while (fgets(buffer, BUFFER_SIZE, stdin) != NULL) {
         // procesa el file e imprime su md5:
-        // sleep(random_time);
+        //sleep(random_time);
         printf("%s\n", mds5);
         fflush(stdout);
     }
