@@ -10,21 +10,16 @@
 #include <semaphore.h>
 #include <time.h>
 #include <string.h>
-
-#include "globals.h"
 #include "shared_memory_lib.h"
 #include "semaphore_lib.h"
-
-#define BUFFER_SIZE                 100
+#include "error.h"
+#include "errno.h"
 
 int main(int argc, char const *argv[]) {
 
     char shared_memory_buffer[BUFFER_SIZE];
     int bytesRead = 0;
-    if ((bytesRead = read(STDIN_FILENO, shared_memory_buffer, BUFFER_SIZE - 1)) == -1) {
-        perror("Error leyendo de entrada estandar");
-        exit(EXIT_FAILURE);
-    }
+    if ((bytesRead = read(STDIN_FILENO, shared_memory_buffer, BUFFER_SIZE - 1)) == -1) ERROR_HANDLING(STDIN_READING);
     shared_memory_buffer[bytesRead] = '\0';
 
     TSharedData* shm_view_ptr = get_shared_memory(shared_memory_buffer);

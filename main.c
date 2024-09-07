@@ -6,18 +6,15 @@
 #include <string.h>
 #include <sys/time.h>
 #include <fcntl.h>
-#include <errno.h>
 #include <time.h>
-#include "globals.h"
 #include "shared_memory_lib.h"
 #include "semaphore_lib.h"
+#include "error.h"
 
 #define     SLAVE_QTY               5
 #define     PERCENTAJE_INITIAL      0.1
 #define     W_END                   1
 #define     R_END                   0
-
-#define     BUFFER_SIZE             MD5_SIZE+1
 
 #define     APP_TO_SLAVE            0
 #define     SLAVE_TO_APP            1
@@ -47,10 +44,8 @@ int main(int argc, char *argv[]) {
     int total_files = argc - 1;
     TSlaveInfo slavesInfo[SLAVE_QTY];
 
-    if(total_files == 0) {
-        perror("No se ingresaron archivos a procesar\n");
-        return 1;
-    }
+    if(total_files == 0)
+        ERROR_HANDLING(NO_FILES_ENTERED);
 
     int initial_files_qty = total_files * PERCENTAJE_INITIAL;
 
@@ -73,10 +68,9 @@ int main(int argc, char *argv[]) {
     for(int i = 0; i < SLAVE_QTY; i++){
         int pid = fork();
 
-        if(pid < 0) {
-            perror("Error al crear el proceso");
-            return 1;
-        } else if (pid == 0) { // Este es el proceso hijo
+        if(pid < 0) ERROR_HANDLING(PROCESS_CREATING);
+
+        else if (pid == 0) { // Este es el proceso hijo
 
             for (int j = 0; j < SLAVE_QTY; j++) {
                 if (j != i) { 
@@ -100,8 +94,8 @@ int main(int argc, char *argv[]) {
             execve(args[0], args, NULL);
 
             // Ante un fallo de execve
-            perror("Error al ejecutar el proceso hijo");
-            exit(EXIT_FAILURE);
+            ERROR_HANDLING(CHILD_PROCESS_EXECUTING);
+
         } else { // Proceso padre
             close(slavesInfo[i].pipes[APP_TO_SLAVE].fdR);
             close(slavesInfo[i].pipes[SLAVE_TO_APP].fdW);
@@ -122,40 +116,33 @@ int main(int argc, char *argv[]) {
             if (!is_closed(slavesInfo[i].pipes[SLAVE_TO_APP].fdR)) FD_SET(slavesInfo[i].pipes[SLAVE_TO_APP].fdR, &fdSet); // Agregamos este file descriptor para que se lo tenga en cuenta a la hora de escuchar cambios
         }
 
-        if (select(slavesInfo[SLAVE_QTY-1].pipes[SLAVE_TO_APP].fdR+1, &fdSet, NULL, NULL, NULL) < 0) {
-            perror("Error con el select de FDs");
-            exit(EXIT_FAILURE);
-        }
+        if (select(slavesInfo[SLAVE_QTY-1].pipes[SLAVE_TO_APP].fdR+1, &fdSet, NULL, NULL, NULL) < 0) ERROR_HANDLING(FDS_SELECT);
 
         for (int i = 0; i < SLAVE_QTY; i++) {
             int fdSlave = slavesInfo[i].pipes[SLAVE_TO_APP].fdR;
             if (FD_ISSET(fdSlave, &fdSet)) {
 
-                ssize_t bytesRead;
+                ssize_t bytes_read;
                 while (slavesInfo[i].filesToProcess > 0){ //lee un md5 mas un \n
                     char buffer[BUFFER_SIZE];
 
-                    bytesRead = read(fdSlave, buffer, BUFFER_SIZE);
-                    // TODO enviar
-                    FILE *file = fopen("resultado.txt", "a");
+                    bytes_read = read(fdSlave, buffer, BUFFER_SIZE);
+                    FILE *file = fopen("results.txt", "a");
                     
-                    if (file == NULL) {
-                        perror("Error al abrir el archivo");
-                        exit(EXIT_FAILURE);
-                    }
+                    if (file == NULL) ERROR_HANDLING(FILE_OPENING);
 
                     fprintf(file, "%s", buffer);
 
                     fclose(file);
 
-                    int shm_index = 100 - remaining_files;
+                    int shm_index = total_files - remaining_files;
 
                     shm_main_ptr[shm_index].slaveID = i+1 ; // TODO recibir el PID del slave, no el indice del esclavo
-                    
-                    strncpy(shm_main_ptr[shm_index].response, buffer, bytesRead);
+                    // ! El PID y el FileName lo devuelve el esclavo
+                    strncpy(shm_main_ptr[shm_index].response, buffer, bytes_read);
                     strcpy(shm_main_ptr[shm_index].fileName, argv[shm_index + 1]);
 
-                    shm_main_ptr[shm_index].response[bytesRead -1] = '\0';
+                    shm_main_ptr[shm_index].response[bytes_read -1] = '\0';
                     
                     post_semaphore(sem_main);
 
@@ -164,10 +151,7 @@ int main(int argc, char *argv[]) {
                     remaining_files--;
                     slavesInfo[i].filesToProcess--; //el slave ya proceso un archivo
                 }
-                if (bytesRead == -1) {
-                    perror("Error leyendo el pipe de %d\n");
-                    exit(EXIT_FAILURE);
-                }
+                if (bytes_read == -1) ERROR_HANDLING(PIPE_READING);
                 
                 if(slavesInfo[i].filesToProcess == 0) { // el slave ya no tiene archivos a procesar
                     if(current_index <= total_files){
@@ -191,32 +175,16 @@ int main(int argc, char *argv[]) {
     return 0;
 }
 
-void print_pipe_statuses(TSlaveInfo slavesInfo[]) {
-    for (int i = 0; i < SLAVE_QTY; i++) {
-        TSlaveInfo currentSlave = slavesInfo[i];
-        printf("Slave N%d:\n", i+1);
-        printf("\t- Pipe APP->SLAVE: R[%d] W[%d]\n", currentSlave.pipes[APP_TO_SLAVE].fdR, currentSlave.pipes[APP_TO_SLAVE].fdW);
-        printf("\t- Pipe SLAVE->APP: R[%d] W[%d]\n", currentSlave.pipes[SLAVE_TO_APP].fdR, currentSlave.pipes[SLAVE_TO_APP].fdW);
-        printf("Files to process: %d\n", currentSlave.filesToProcess);
-        printf("\n");
-    }
-}
-
 void setup_slaves(TSlaveInfo* slavesInfo, int slotSize) {
     for (int i = 0; i < SLAVE_QTY; i++) {
         int pipe1[2];
-        if (pipe(pipe1) == -1) {  // Pipe main->slave
-            perror("Error al crear el pipe app->slave");
-            exit(EXIT_FAILURE);
-        }
+        if (pipe(pipe1) == -1) ERROR_HANDLING(APP_SLAVE_PIPE_CREATION);
+
         slavesInfo[i].pipes[APP_TO_SLAVE].fdR = pipe1[R_END];
         slavesInfo[i].pipes[APP_TO_SLAVE].fdW = pipe1[W_END];
 
         int pipe2[2];
-        if (pipe(pipe2) == -1) {  // Pipe slave->main
-            perror("Error al crear el pipe slave->app");
-            exit(EXIT_FAILURE);
-        }
+        if (pipe(pipe2) == -1) ERROR_HANDLING(SLAVE_APP_PIPE_CREATION);
 
         slavesInfo[i].pipes[SLAVE_TO_APP].fdR = pipe2[R_END];
         slavesInfo[i].pipes[SLAVE_TO_APP].fdW = pipe2[W_END];
@@ -231,10 +199,7 @@ int is_closed(int fd) {
 }
 
 void send_file(int pipe_fd, char *arg) {
-    if (write(pipe_fd, arg, strlen(arg)) == -1) {
-        perror("Error al escribir en el pipe");
-        exit(1);
-    }
+    if (write(pipe_fd, arg, strlen(arg)) == -1) ERROR_HANDLING(PIPE_WRITING);
     write(pipe_fd, "\n", 1);
     current_index++;
 }

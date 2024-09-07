@@ -5,8 +5,6 @@
 #include <stdlib.h>
 #include "globals.h"
 
-#define BUFFER_SIZE 100
-
 int main(int argc, char *argv[]) {
     srand(time(NULL)^ getpid());
     int random_time = (rand() % 5) + 1;
@@ -15,7 +13,7 @@ int main(int argc, char *argv[]) {
     
     while (fgets(buffer, BUFFER_SIZE, stdin) != NULL) {
         // procesa el file e imprime su md5:
-        //usleep(random_time * 100000); // Duerme por random_time segundos
+        usleep(random_time * 80000);
         printf("%s\n", mds5);
         fflush(stdout);
     }

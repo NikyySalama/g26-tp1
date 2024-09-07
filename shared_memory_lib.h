@@ -2,6 +2,9 @@
 #ifndef SHARED_MEMORY_LIB_H
 #define SHARED_MEMORY_LIB_H
 
+#define SHARED_MEMORY_SIZE          (sizeof(TSharedData) * MAX_FILES)
+#define SHARED_MEMORY_PERMISSIONS   0666
+
 typedef struct {
     int slaveID;
     char response[MD5_SIZE+1];

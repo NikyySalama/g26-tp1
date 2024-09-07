@@ -2,6 +2,7 @@
     "files.associations": {
         "*.properties": "java-properties",
         "unistd.h": "c",
-        "cstdlib": "c"
+        "cstdlib": "c",
+        "mman.h": "c"
     }
 }
