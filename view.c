@@ -28,17 +28,15 @@ int main(int argc, char const *argv[]) {
     shared_memory_buffer[bytesRead] = '\0';
 
     TSharedData* shm_view_ptr = get_shared_memory(shared_memory_buffer);
-    TSemaphore* sem_view = get_semaphore(SEM_NAME);
+    TSemaphore* sem_view = get_semaphore(shared_memory_buffer);
 
     int s = 0;
     while (s < 100) {
         wait_semaphore(sem_view);
-        printf("VIEW: Slave ID: %d, MD5: %s, FILE: %s\n", shm_view_ptr[s].slaveID, shm_view_ptr[s].response, shm_view_ptr[s].fileName);
-        post_semaphore(sem_view);
+        printf("VIEW[%d]: Slave ID: %d, MD5: %s, FILE: %s\n",s, shm_view_ptr[s].slaveID, shm_view_ptr[s].response, shm_view_ptr[s].fileName);
         s++;
     }
-
-    printf("Conectandose a %s, de %d bytes\n", shared_memory_buffer, bytesRead);
+    
     printf("\nVIEW FINISHED\n");
 
     return 0;

@@ -25,7 +25,7 @@ TSharedData* create_shared_memory(char* name){
 		exit(EXIT_FAILURE);
 	}
 
-    void *ptr = mmap(0, SHARED_MEMORY_SIZE, PROT_READ | PROT_WRITE, MAP_SHARED, shm_fd, 0);
+    void *ptr = mmap(0, SHARED_MEMORY_SIZE, PROT_WRITE | PROT_READ, MAP_SHARED, shm_fd, 0);
 	if (ptr == MAP_FAILED) {
 		perror("mmap");
 		exit(EXIT_FAILURE);
@@ -35,20 +35,20 @@ TSharedData* create_shared_memory(char* name){
 }
 
 TSharedData* get_shared_memory(char* name) {
-    int shm_fd = shm_open(name, O_RDWR, 0666);
+    int shm_fd = shm_open(name, O_RDONLY, 0);
     if (shm_fd == -1) {
         perror("Error al abrir el bloque de memoria compartida desde view");
         exit(EXIT_FAILURE);
     }
 
-    void *ptr = mmap(NULL, SHARED_MEMORY_SIZE, PROT_READ | PROT_WRITE, MAP_SHARED, shm_fd, 0);
+    void *ptr = mmap(NULL, SHARED_MEMORY_SIZE, PROT_READ, MAP_SHARED, shm_fd, 0);
 	if (ptr == MAP_FAILED) {
 		perror("Error mapeando la memoria compartida");
         close(shm_fd);
 		exit(EXIT_FAILURE);
 	}
 
-    close(shm_fd);
+    // close(shm_fd);
 
     return (TSharedData*) ptr;
 }

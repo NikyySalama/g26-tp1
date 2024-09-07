@@ -64,10 +64,10 @@ int main(int argc, char *argv[]) {
     setup_slaves(slavesInfo, files_per_slave);
 
     TSharedData* shm_main_ptr = create_shared_memory(APP_VIEW_CONNECTION);
-    TSemaphore* sem_main = create_semaphore(SEM_NAME);
+    TSemaphore* sem_main = create_semaphore(APP_VIEW_CONNECTION);
 
     sleep(S_WAIT_FOR_VIEW); // Esperamos a que haya un proceso vista para conectar la salida
-    printf("%s", APP_VIEW_CONNECTION);
+    printf(APP_VIEW_CONNECTION);
     fflush(stdout);
 
     for(int i = 0; i < SLAVE_QTY; i++){
@@ -150,16 +150,16 @@ int main(int argc, char *argv[]) {
 
                     int shm_index = 100 - remaining_files;
 
-                    shm_main_ptr[shm_index].slaveID = i ; // TODO recibir el PID del slave, no el indice del esclavo
+                    shm_main_ptr[shm_index].slaveID = i+1 ; // TODO recibir el PID del slave, no el indice del esclavo
                     
-                    strncpy(shm_main_ptr[shm_index].response, buffer, sizeof(shm_main_ptr[shm_index].response) - 1);
-                    strncpy(shm_main_ptr[shm_index].fileName, argv[shm_index + 1], sizeof(shm_main_ptr[shm_index].response) - 1);
-                    
-                    shm_main_ptr[shm_index].response[sizeof(shm_main_ptr[shm_index].response) - 1] = '\0';
+                    strncpy(shm_main_ptr[shm_index].response, buffer, bytesRead);
+                    strcpy(shm_main_ptr[shm_index].fileName, argv[shm_index + 1]);
+
+                    shm_main_ptr[shm_index].response[bytesRead -1] = '\0';
                     
                     post_semaphore(sem_main);
 
-                    // printf("La info en Shared Memory es: Slave ID: %d, MD5: %s, FILE: %s\n", shm_main_ptr[shm_index].slaveID, shm_main_ptr[shm_index].response, shm_main_ptr[shm_index].fileName);
+                    //printf("La info en Shared Memory es: Slave ID: %d, MD5: %s, FILE: %s\n", shm_main_ptr[shm_index].slaveID, shm_main_ptr[shm_index].response, shm_main_ptr[shm_index].fileName);
                     
                     remaining_files--;
                     slavesInfo[i].filesToProcess--; //el slave ya proceso un archivo
@@ -186,7 +186,7 @@ int main(int argc, char *argv[]) {
     
     end_shared_memory(shm_main_ptr);
     delete_shared_memory(APP_VIEW_CONNECTION);
-    delete_semaphore(SEM_NAME, sem_main);
+    delete_semaphore(APP_VIEW_CONNECTION, sem_main);
 
     return 0;
 }
