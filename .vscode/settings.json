@@ -1,0 +1,7 @@
+{
+    "files.associations": {
+        "*.properties": "java-properties",
+        "unistd.h": "c",
+        "cstdlib": "c"
+    }
+}

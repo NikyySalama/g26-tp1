@@ -8,21 +8,22 @@
 #include <fcntl.h>
 #include <errno.h>
 #include <time.h>
-#include <semaphore.h>
 #include "globals.h"
+#include "shared_memory_lib.h"
+#include "semaphore_lib.h"
 
-#define     SLAVE_QTY           5
-#define     PERCENTAJE_INITIAL  0.1
-#define     W_END               1
-#define     R_END               0
+#define     SLAVE_QTY               5
+#define     PERCENTAJE_INITIAL      0.1
+#define     W_END                   1
+#define     R_END                   0
 
-#define     BUFFER_SIZE         MD5_SIZE+1
+#define     BUFFER_SIZE             MD5_SIZE+1
 
-#define     APP_TO_SLAVE        0
-#define     SLAVE_TO_APP        1
+#define     APP_TO_SLAVE            0
+#define     SLAVE_TO_APP            1
 
-#define     S_WAIT_FOR_VIEW     2
-#define     SHARED_MEMORY_NAME  "/application_view_shared_memory"
+#define     S_WAIT_FOR_VIEW         2
+#define     APP_VIEW_CONNECTION     "/app_view_connection"
 
 typedef struct {
     int fdR;
@@ -46,7 +47,6 @@ int main(int argc, char *argv[]) {
     int total_files = argc - 1;
     TSlaveInfo slavesInfo[SLAVE_QTY];
 
-
     if(total_files == 0) {
         perror("No se ingresaron archivos a procesar\n");
         return 1;
@@ -63,16 +63,11 @@ int main(int argc, char *argv[]) {
 
     setup_slaves(slavesInfo, files_per_slave);
 
-    TSharedData* shm_main_ptr = start_shared_memory(SHARED_MEMORY_NAME);
-
-    sem_t *sem_main = sem_open(SEMAPHORE_NAME, O_CREAT, SEMAPHORE_PERMISSIONS, 1);
-    if (sem_main == SEM_FAILED) {
-        perror("Error abriendo el semáforo desde view");
-        exit(EXIT_FAILURE);
-    }
+    TSharedData* shm_main_ptr = create_shared_memory(APP_VIEW_CONNECTION);
+    TSemaphore* sem_main = create_semaphore(SEM_NAME);
 
     sleep(S_WAIT_FOR_VIEW); // Esperamos a que haya un proceso vista para conectar la salida
-    printf("%s\n",SHARED_MEMORY_NAME);
+    printf("%s", APP_VIEW_CONNECTION);
     fflush(stdout);
 
     for(int i = 0; i < SLAVE_QTY; i++){
@@ -119,7 +114,7 @@ int main(int argc, char *argv[]) {
         }
     }
 
-    while (remaining_files > 0) { // TODO Reemplazar por la condición de no haber leido de todos
+    while (remaining_files > 0) {
         fd_set fdSet;
         FD_ZERO(&fdSet);
 
@@ -153,14 +148,19 @@ int main(int argc, char *argv[]) {
 
                     fclose(file);
 
-                    shm_main_ptr[100-remaining_files].slaveID = i ; // TODO recibir el PID del slave, no el indice del esclavo
-                    
-                    strncpy(shm_main_ptr[100-remaining_files].response, buffer, sizeof(shm_main_ptr[100-remaining_files].response) - 1);
-                    strncpy(shm_main_ptr[100-remaining_files].fileName, argv[100-remaining_files + 1], sizeof(shm_main_ptr[100-remaining_files].response) - 1);
-                    
-                    shm_main_ptr[100-remaining_files].response[sizeof(shm_main_ptr[100-remaining_files].response) - 1] = '\0';
-                    sem_post(sem_main);
+                    int shm_index = 100 - remaining_files;
 
+                    shm_main_ptr[shm_index].slaveID = i ; // TODO recibir el PID del slave, no el indice del esclavo
+                    
+                    strncpy(shm_main_ptr[shm_index].response, buffer, sizeof(shm_main_ptr[shm_index].response) - 1);
+                    strncpy(shm_main_ptr[shm_index].fileName, argv[shm_index + 1], sizeof(shm_main_ptr[shm_index].response) - 1);
+                    
+                    shm_main_ptr[shm_index].response[sizeof(shm_main_ptr[shm_index].response) - 1] = '\0';
+                    
+                    post_semaphore(sem_main);
+
+                    // printf("La info en Shared Memory es: Slave ID: %d, MD5: %s, FILE: %s\n", shm_main_ptr[shm_index].slaveID, shm_main_ptr[shm_index].response, shm_main_ptr[shm_index].fileName);
+                    
                     remaining_files--;
                     slavesInfo[i].filesToProcess--; //el slave ya proceso un archivo
                 }
@@ -184,11 +184,9 @@ int main(int argc, char *argv[]) {
         }
     }
     
-    end_shared_memory(shm_main_ptr, SHARED_MEMORY_NAME);
-    delete_shared_memory(shm_main_ptr, SHARED_MEMORY_NAME);
-
-    sem_close(sem_main);
-    sem_destroy(sem_main);
+    end_shared_memory(shm_main_ptr);
+    delete_shared_memory(APP_VIEW_CONNECTION);
+    delete_semaphore(SEM_NAME, sem_main);
 
     return 0;
 }

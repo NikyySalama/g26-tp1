@@ -9,36 +9,36 @@
 #include <sys/stat.h>
 #include <semaphore.h>
 #include <time.h>
+#include <string.h>
 
 #include "globals.h"
+#include "shared_memory_lib.h"
+#include "semaphore_lib.h"
 
 #define BUFFER_SIZE                 100
 
 int main(int argc, char const *argv[]) {
-    // TODO hacer que funcione si están conectados en terminales distintas
-    char shared_memory_buffer[BUFFER_SIZE];
-    if (fgets(shared_memory_buffer, BUFFER_SIZE, stdin) == NULL) {
-        perror("Error al leer desde la entrada estandar");
-        return 1;
-    }
 
-    void* shm_view_ptr = start_shared_memory(shared_memory_buffer);
-    // ? El semaforo es global?
-    sem_t *sem_view = sem_open(SEMAPHORE_NAME, O_CREAT, SEMAPHORE_PERMISSIONS, 1);
-    if (sem_view == SEM_FAILED) {
-        perror("Error abriendo el semáforo desde view");
+    char shared_memory_buffer[BUFFER_SIZE];
+    int bytesRead = 0;
+    if ((bytesRead = read(STDIN_FILENO, shared_memory_buffer, BUFFER_SIZE - 1)) == -1) {
+        perror("Error leyendo de entrada estandar");
         exit(EXIT_FAILURE);
     }
+    shared_memory_buffer[bytesRead] = '\0';
+
+    TSharedData* shm_view_ptr = get_shared_memory(shared_memory_buffer);
+    TSemaphore* sem_view = get_semaphore(SEM_NAME);
 
     int s = 0;
     while (s < 100) {
-        sem_wait(sem_view);
-        TSharedData* slaveResult = (TSharedData*) shm_view_ptr;
-        printf("VIEW: Slave ID: %d, MD5: %s, FILE: %s\n", slaveResult[s].slaveID, slaveResult[s].response, slaveResult[s].fileName);
-        sem_post(sem_view);
+        wait_semaphore(sem_view);
+        printf("VIEW: Slave ID: %d, MD5: %s, FILE: %s\n", shm_view_ptr[s].slaveID, shm_view_ptr[s].response, shm_view_ptr[s].fileName);
+        post_semaphore(sem_view);
         s++;
     }
 
+    printf("Conectandose a %s, de %d bytes\n", shared_memory_buffer, bytesRead);
     printf("\nVIEW FINISHED\n");
 
     return 0;
