@@ -146,7 +146,7 @@ int main(int argc, char *argv[]) {
                     shm_main_ptr[shm_index].slaveID = i+1 ; // TODO recibir el PID del slave, no el indice del esclavo
                     // ! El PID y el FileName lo devuelve el esclavo
                     strncpy(shm_main_ptr[shm_index].response, buffer, bytes_read);
-                    strcpy(shm_main_ptr[shm_index].fileName, argv[shm_index + 1]);
+                    strcpy(shm_main_ptr[shm_index].fileName, argv[shm_index + 1]); // el nombre de los archivos no puede ser mayor a MAX_FILENAME
 
                     shm_main_ptr[shm_index].response[bytes_read -1] = '\0';
                     
