@@ -1,3 +1,5 @@
+// This is a personal academic project. Dear PVS-Studio, please check it.
+// PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 #include <stdio.h>
 #include <unistd.h>
 #include <stdlib.h>
@@ -127,6 +129,10 @@ int main(int argc, char *argv[]) {
                     char buffer[BUFFER_SIZE];
 
                     bytes_read = read(fdSlave, buffer, BUFFER_SIZE);
+    
+                    if (bytes_read == -1) ERROR_HANDLING(PIPE_READING);
+                    else if (bytes_read == 0) break;
+
                     FILE *file = fopen("results.txt", "a");
                     
                     if (file == NULL) ERROR_HANDLING(FILE_OPENING);
@@ -151,7 +157,6 @@ int main(int argc, char *argv[]) {
                     remaining_files--;
                     slavesInfo[i].filesToProcess--; //el slave ya proceso un archivo
                 }
-                if (bytes_read == -1) ERROR_HANDLING(PIPE_READING);
                 
                 if(slavesInfo[i].filesToProcess == 0) { // el slave ya no tiene archivos a procesar
                     if(current_index <= total_files){
