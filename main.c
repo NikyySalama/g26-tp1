@@ -133,6 +133,8 @@ int main(int argc, char *argv[]) {
                     if (bytes_read == -1) ERROR_HANDLING(PIPE_READING);
                     else if (bytes_read == 0) break;
 
+                    buffer[bytes_read] = '\0';
+
                     FILE *file = fopen("results.txt", "a");
                     
                     if (file == NULL) ERROR_HANDLING(FILE_OPENING);
