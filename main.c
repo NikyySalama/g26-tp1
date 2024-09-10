@@ -92,8 +92,16 @@ int main(int argc, char *argv[]) {
             dup2(slavesInfo[i].pipes[SLAVE_TO_APP].fdW, STDOUT_FILENO); // El proceso slave escribe en STDOUT, y queremos que esto se pipee al fdW correspondiente
             close(slavesInfo[i].pipes[SLAVE_TO_APP].fdW);
 
-            char *args[] = {"./slave.o", NULL};
+            char pipe_in_fd_str[10];  // Buffer to store the string of the read file descriptor
+            char pipe_out_fd_str[10]; // Buffer to store the string of the write file descriptor
+
+
+            snprintf(pipe_in_fd_str, sizeof(pipe_in_fd_str), "%d", slavesInfo[i].pipes[APP_TO_SLAVE].fdR); // Conversion du fd de lecture
+            snprintf(pipe_out_fd_str, sizeof(pipe_out_fd_str), "%d", slavesInfo[i].pipes[SLAVE_TO_APP].fdW); // Conversion du fd d'écriture
+
+            char *args[] = {"./slave.o", pipe_in_fd_str, pipe_out_fd_str, NULL}; // Passage des arguments à l'esclave
             execve(args[0], args, NULL);
+
 
             // Ante un fallo de execve
             ERROR_HANDLING(CHILD_PROCESS_EXECUTING);
