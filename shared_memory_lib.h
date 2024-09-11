@@ -5,13 +5,11 @@
 #define SHARED_MEMORY_SIZE          (sizeof(TSharedData) * MAX_FILES)
 #define SHARED_MEMORY_PERMISSIONS   0666
 
-/*typedef struct {
+typedef struct {
     int slaveID;
     char response[MD5_SIZE+1];
     char fileName[MAX_FILENAME];
-} TSharedData;*/
-
-typedef char TSharedData[BUFFER_SIZE];
+} TSharedData;
 
 TSharedData* create_shared_memory(char* name);
 TSharedData* get_shared_memory(char* name);

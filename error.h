@@ -35,9 +35,6 @@
 #define SHARED_MEMORY_UNMAPPING                 "No se pudo desmapear el bloque de memoria compartida\n"
 #define SHARED_MEMORY_DELETING                  "No se pudo eliminar el bloque de memoria compartida\n"
 
-// Tokens error
-#define TOKENS_ERROR_QTY                        "No se pudo tokenizar correctamente la salida del esclavo\n"
-
 // Macro
 #define ERROR_HANDLING(error_details)                           \
     do {                                                        \
