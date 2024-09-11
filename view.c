@@ -30,7 +30,8 @@ int main(int argc, char const *argv[]) {
     int s = 0;
     while (s < 100) {
         wait_semaphore(sem_view);
-        printf("VIEW[%d]: Slave ID: %d, MD5: %s, FILE: %s\n",s, shm_view_ptr[s].slaveID, shm_view_ptr[s].response, shm_view_ptr[s].fileName);
+        //printf("VIEW[%d]: Slave ID: %d, MD5: %s, FILE: %s\n",s, shm_view_ptr[s].slaveID, shm_view_ptr[s].response, shm_view_ptr[s].fileName);
+        printf("%s", shm_view_ptr[s]);
         s++;
     }
     
