@@ -3,10 +3,10 @@ CFLAGS = -Wall -g
 
 all: main slave view
 
-main: main.c shared_memory_lib.o semaphore_lib.o  error.h
+main: main.c shared_memory_lib.o semaphore_lib.o  error.h pipe_lib.h
 	$(CC) $(CFLAGS) -o main.o main.c shared_memory_lib.o semaphore_lib.o
 
-slave: slave.c shared_memory_lib.o semaphore_lib.o globals.h  error.h
+slave: slave.c shared_memory_lib.o semaphore_lib.o globals.h error.h pipe_lib.h
 	$(CC) $(CFLAGS) -o slave.o slave.c shared_memory_lib.o semaphore_lib.o
 
 view: view.c shared_memory_lib.o semaphore_lib.o  error.h

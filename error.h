@@ -10,6 +10,7 @@
 #define PIPE_WRITING                            "No se pudo escribir en el pipe indicado\n"
 #define APP_SLAVE_PIPE_CREATION                 "No se pudo crear el pipe app->slave\n"
 #define SLAVE_APP_PIPE_CREATION                 "No se pudo crear el pipe slave->app\n"
+#define SLAVE_MD5_PIPE_CREATION                 "No se pudo crear el pipe slave->MD5\n"
 
 // Process error messages
 #define PROCESS_CREATING                        "No se pudo crear el proceso\n"

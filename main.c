@@ -12,22 +12,16 @@
 #include "shared_memory_lib.h"
 #include "semaphore_lib.h"
 #include "error.h"
+#include "pipe_lib.h"
 
 #define     SLAVE_QTY               5
 #define     PERCENTAJE_INITIAL      0.1
-#define     W_END                   1
-#define     R_END                   0
 
 #define     APP_TO_SLAVE            0
 #define     SLAVE_TO_APP            1
 
 #define     S_WAIT_FOR_VIEW         2
 #define     APP_VIEW_CONNECTION     "/app_view_connection"
-
-typedef struct {
-    int fdR;
-    int fdW;
-} TPipe;
 
 typedef struct {
     TPipe pipes[2];
