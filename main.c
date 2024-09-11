@@ -125,7 +125,7 @@ int main(int argc, char *argv[]) {
             if (FD_ISSET(fdSlave, &fdSet)) {
 
                 ssize_t bytes_read;
-                while (slavesInfo[i].filesToProcess > 0){ //lee un md5 mas un \n
+                while (slavesInfo[i].filesToProcess > 0) {
                     char buffer[BUFFER_SIZE];
 
                     bytes_read = read(fdSlave, buffer, BUFFER_SIZE);
@@ -134,6 +134,7 @@ int main(int argc, char *argv[]) {
                     else if (bytes_read == 0) break;
 
                     buffer[bytes_read] = '\0';
+
 
                     FILE *file = fopen("results.txt", "a");
                     
@@ -145,12 +146,14 @@ int main(int argc, char *argv[]) {
 
                     int shm_index = total_files - remaining_files;
 
-                    shm_main_ptr[shm_index].slaveID = i+1 ; // TODO recibir el PID del slave, no el indice del esclavo
-                    // ! El PID y el FileName lo devuelve el esclavo
-                    strncpy(shm_main_ptr[shm_index].response, buffer, bytes_read);
-                    strcpy(shm_main_ptr[shm_index].fileName, argv[shm_index + 1]); // el nombre de los archivos no puede ser mayor a MAX_FILENAME
+                    // shm_main_ptr[shm_index].slaveID = i+1 ; // TODO recibir el PID del slave, no el indice del esclavo
+                    // strncpy(shm_main_ptr[shm_index].response, buffer, bytes_read);
+                    // strcpy(shm_main_ptr[shm_index].fileName, argv[shm_index + 1]); // el nombre de los archivos no puede ser mayor a MAX_FILENAME
 
-                    shm_main_ptr[shm_index].response[bytes_read -1] = '\0';
+                    // shm_main_ptr[shm_index].response[bytes_read -1] = '\0';
+
+                    printf("[%d] Buffer: %s\n", bytes_read, buffer);
+                    strncpy(shm_main_ptr[shm_index], buffer, bytes_read);
                     
                     post_semaphore(sem_main);
 
@@ -209,4 +212,46 @@ void send_file(int pipe_fd, char *arg) {
     if (write(pipe_fd, arg, strlen(arg)) == -1) ERROR_HANDLING(PIPE_WRITING);
     write(pipe_fd, "\n", 1);
     current_index++;
+}
+
+char **split_string(const char *str, const char *delim, int *num_tokens)
+{
+    char *str_copy = strdup(str);
+    if (!str_copy) {
+        perror("Error al duplicar cadena");
+        exit(EXIT_FAILURE);
+    }
+
+    int count = 0;
+    char *token = strtok(str_copy, delim);
+    while (token != NULL) {
+        count++;
+        token = strtok(NULL, delim);
+        printf("%s\n", token);
+    }
+
+    char **tokens = malloc(count * sizeof(char *));
+    if (!tokens) {
+        perror("Error al asignar memoria");
+        exit(EXIT_FAILURE);
+    }
+
+    strcpy(str_copy, str);
+
+    token = strtok(str_copy, delim);
+    for (int i = 0; i < count; i++) {
+        tokens[i] = strdup(token);
+        if (!tokens[i])
+        {
+            perror("Error al duplicar token");
+            exit(EXIT_FAILURE);
+        }
+        token = strtok(NULL, delim);
+    }
+
+    free(str_copy);
+
+    *num_tokens = count;
+    printf("%d\n", count);
+    return tokens;
 }

@@ -4,8 +4,12 @@
 #define SLAVE_QTY               5
 
 #define MD5_SIZE                32
-#define BUFFER_SIZE             (MD5_SIZE+1)
-#define MAX_FILENAME            256
+#define MAX_FILENAME            30
+#define MARGIN                  10
+
+#define BUFFER_SIZE             (MD5_SIZE+MAX_FILENAME+MARGIN)
 #define MAX_FILES               256
+
+#define DELIMITER               ","
 
 #endif

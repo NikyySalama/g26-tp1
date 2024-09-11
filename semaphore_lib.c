@@ -12,7 +12,7 @@
 
 
 TSemaphore* create_semaphore(char* name){
-    TSemaphore *sem = sem_open(name, O_CREAT | O_RDWR, 0666, 1);
+    TSemaphore *sem = sem_open(name, O_CREAT | O_RDWR, 0666, 0);
     if (sem == SEM_FAILED) ERROR_HANDLING(SEMAPHORE_CREATING);
     return sem;
 }
