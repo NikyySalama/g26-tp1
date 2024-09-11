@@ -8,6 +8,7 @@
 #include "globals.h"
 
 int main(int argc, char* argv[]) {
+
     if (argc != 3) {
         ERROR_HANDLING("Usage: slave <read_pipe_fd> <write_pipe_fd>");
     }
@@ -20,9 +21,13 @@ int main(int argc, char* argv[]) {
 
     while (1) {
         // Reading file path from the application via stdin
+        printf("Try to read on pipe_in_fd : %d\n", pipe_in_fd);
+
         ssize_t bytes_read = read(pipe_in_fd, filePath, sizeof(filePath) - 1);
         if (bytes_read == -1) {
+
             ERROR_HANDLING(PIPE_READING);
+
         } else if (bytes_read == 0) {
             // No more files to read, break the loop
             break;
@@ -60,6 +65,7 @@ int main(int argc, char* argv[]) {
             // Send the result (slave ID, MD5 hash, and file name) to the application
             char resultBuffer[BUFFER_SIZE + MAX_FILENAME];
             snprintf(resultBuffer, sizeof(resultBuffer), "Slave ID: %d, MD5: %s, FILE: %s\n", getpid(), md5Output, filePath);
+
 
             if (write(pipe_out_fd, resultBuffer, strlen(resultBuffer)) == -1) {
                 ERROR_HANDLING(PIPE_WRITING);

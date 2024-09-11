@@ -83,23 +83,22 @@ int main(int argc, char *argv[]) {
                 }
             }
         
-            close(slavesInfo[i].pipes[APP_TO_SLAVE].fdW);
-            close(slavesInfo[i].pipes[SLAVE_TO_APP].fdR);
+            //close(slavesInfo[i].pipes[APP_TO_SLAVE].fdW);
+            //close(slavesInfo[i].pipes[SLAVE_TO_APP].fdR);
 
             dup2(slavesInfo[i].pipes[APP_TO_SLAVE].fdR, STDIN_FILENO); // Lo que escriba la app se redirige a STDIN para que el eslcavo lo levante de ahi            
-            close(slavesInfo[i].pipes[APP_TO_SLAVE].fdR);
+            //close(slavesInfo[i].pipes[APP_TO_SLAVE].fdR);
 
             dup2(slavesInfo[i].pipes[SLAVE_TO_APP].fdW, STDOUT_FILENO); // El proceso slave escribe en STDOUT, y queremos que esto se pipee al fdW correspondiente
-            close(slavesInfo[i].pipes[SLAVE_TO_APP].fdW);
+            //close(slavesInfo[i].pipes[SLAVE_TO_APP].fdW);
 
             char pipe_in_fd_str[10];  // Buffer to store the string of the read file descriptor
             char pipe_out_fd_str[10]; // Buffer to store the string of the write file descriptor
 
 
-            snprintf(pipe_in_fd_str, sizeof(pipe_in_fd_str), "%d", slavesInfo[i].pipes[APP_TO_SLAVE].fdR); // Conversion du fd de lecture
-            snprintf(pipe_out_fd_str, sizeof(pipe_out_fd_str), "%d", slavesInfo[i].pipes[SLAVE_TO_APP].fdW); // Conversion du fd d'écriture
-
-            char *args[] = {"./slave.o", pipe_in_fd_str, pipe_out_fd_str, NULL}; // Passage des arguments à l'esclave
+            snprintf(pipe_in_fd_str, sizeof(pipe_in_fd_str), "%d", slavesInfo[i].pipes[APP_TO_SLAVE].fdR); 
+            snprintf(pipe_out_fd_str, sizeof(pipe_out_fd_str), "%d", slavesInfo[i].pipes[SLAVE_TO_APP].fdW); 
+            char *args[] = {"./slave.o", pipe_in_fd_str, pipe_out_fd_str, NULL}; 
             execve(args[0], args, NULL);
 
 
@@ -107,6 +106,7 @@ int main(int argc, char *argv[]) {
             ERROR_HANDLING(CHILD_PROCESS_EXECUTING);
 
         } else { // Proceso padre
+
             close(slavesInfo[i].pipes[APP_TO_SLAVE].fdR);
             close(slavesInfo[i].pipes[SLAVE_TO_APP].fdW);
         }
@@ -115,6 +115,8 @@ int main(int argc, char *argv[]) {
     for (int i = 0; i < SLAVE_QTY; i++) {
         for(int f = 0; f < files_per_slave; f++) {
             send_file(slavesInfo[i].pipes[APP_TO_SLAVE].fdW, argv[current_index]);
+            
+            
         }
     }
 
@@ -214,6 +216,7 @@ int is_closed(int fd) {
 }
 
 void send_file(int pipe_fd, char *arg) {
+    
     if (write(pipe_fd, arg, strlen(arg)) == -1) ERROR_HANDLING(PIPE_WRITING);
     write(pipe_fd, "\n", 1);
     current_index++;
