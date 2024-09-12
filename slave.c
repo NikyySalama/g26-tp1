@@ -9,7 +9,7 @@
 #include "pipe_lib.h"
 #include "error.h"
 
-#define CONTENIDO_BUFFER "%d"DELIMITER"%s"DELIMITER"%s\n" // PID, FILE, MD5
+#define CONTENIDO_BUFFER "%d"DELIMITER"%s"DELIMITER"%s\t" // PID, FILE, MD5
 
 int main(int argc, char *argv[]) {
     char buffer[BUFFER_SIZE];

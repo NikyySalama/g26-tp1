@@ -129,32 +129,30 @@ int main(int argc, char *argv[]) {
 
                     buffer[bytes_read] = '\0';
 
+                    char *slave_response = strtok(buffer, "\t");
+                    while (slave_response != NULL) {
+                        int shm_index = total_files - remaining_files;
 
-                    FILE *file = fopen("results.txt", "a");
-                    
-                    if (file == NULL) ERROR_HANDLING(FILE_OPENING);
+                        FILE *file = fopen("results.txt", "a");
+                        
+                        if (file == NULL) ERROR_HANDLING(FILE_OPENING);
 
-                    fprintf(file, "%s", buffer);
+                        fprintf(file, "%s", slave_response);
 
-                    fclose(file);
+                        fclose(file);
 
-                    int shm_index = total_files - remaining_files;
+                        // Procesamos la línea (respuesta de un slave)
+                        
+                        //populate_data_from_string(slave_response, DELIMITER, &(shm_main_ptr[shm_index]));
+                        
+                        printf("Procesado: %s\n", slave_response);
 
-                    // shm_main_ptr[shm_index].slaveID = i+1 ; // TODO recibir el PID del slave, no el indice del esclavo
-                    // strncpy(shm_main_ptr[shm_index].response, buffer, bytes_read);
-                    // strcpy(shm_main_ptr[shm_index].fileName, argv[shm_index + 1]); // el nombre de los archivos no puede ser mayor a MAX_FILENAME
+                        post_semaphore(sem_main);
+                        remaining_files--;
+                        slavesInfo[i].filesToProcess--;
 
-                    // shm_main_ptr[shm_index].response[bytes_read -1] = '\0';
-
-                    printf("[%d] Buffer: %s\n", bytes_read, buffer);
-                    strncpy(shm_main_ptr[shm_index], buffer, bytes_read);
-                    
-                    post_semaphore(sem_main);
-
-                    //printf("La info en Shared Memory es: Slave ID: %d, MD5: %s, FILE: %s\n", shm_main_ptr[shm_index].slaveID, shm_main_ptr[shm_index].response, shm_main_ptr[shm_index].fileName);
-                    
-                    remaining_files--;
-                    slavesInfo[i].filesToProcess--; //el slave ya proceso un archivo
+                        slave_response = strtok(NULL, "\t");
+                    }
                 }
                 
                 if(slavesInfo[i].filesToProcess == 0) { // el slave ya no tiene archivos a procesar
@@ -206,46 +204,4 @@ void send_file(int pipe_fd, char *arg) {
     if (write(pipe_fd, arg, strlen(arg)) == -1) ERROR_HANDLING(PIPE_WRITING);
     write(pipe_fd, "\n", 1);
     current_index++;
-}
-
-char **split_string(const char *str, const char *delim, int *num_tokens)
-{
-    char *str_copy = strdup(str);
-    if (!str_copy) {
-        perror("Error al duplicar cadena");
-        exit(EXIT_FAILURE);
-    }
-
-    int count = 0;
-    char *token = strtok(str_copy, delim);
-    while (token != NULL) {
-        count++;
-        token = strtok(NULL, delim);
-        printf("%s\n", token);
-    }
-
-    char **tokens = malloc(count * sizeof(char *));
-    if (!tokens) {
-        perror("Error al asignar memoria");
-        exit(EXIT_FAILURE);
-    }
-
-    strcpy(str_copy, str);
-
-    token = strtok(str_copy, delim);
-    for (int i = 0; i < count; i++) {
-        tokens[i] = strdup(token);
-        if (!tokens[i])
-        {
-            perror("Error al duplicar token");
-            exit(EXIT_FAILURE);
-        }
-        token = strtok(NULL, delim);
-    }
-
-    free(str_copy);
-
-    *num_tokens = count;
-    printf("%d\n", count);
-    return tokens;
 }
