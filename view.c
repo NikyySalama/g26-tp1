@@ -19,9 +19,9 @@
 
 int main(int argc, char const *argv[]) {
 
-    char shared_memory_buffer[BUFFER_SIZE];
+    char shared_memory_buffer[RESPONSE_SIZE];
     int bytesRead = 0;
-    if ((bytesRead = read(STDIN_FILENO, shared_memory_buffer, BUFFER_SIZE - 1)) == -1) ERROR_HANDLING(STDIN_READING);
+    if ((bytesRead = read(STDIN_FILENO, shared_memory_buffer, RESPONSE_SIZE - 1)) == -1) ERROR_HANDLING(STDIN_READING);
     shared_memory_buffer[bytesRead] = '\0';
 
     TSharedData* shm_view_ptr = get_shared_memory(shared_memory_buffer);
@@ -29,7 +29,7 @@ int main(int argc, char const *argv[]) {
 
     TSharedData data_read;
 
-    
+
     int index = 0;
     wait_semaphore(sem_view);
     data_read = shm_view_ptr[index];

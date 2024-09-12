@@ -31,8 +31,7 @@ typedef struct {
 void send_file (int pipe_fd, char *arg);
 void setup_slaves(TSlaveInfo* slavesInfo, int slotSize);
 int is_closed(int fd);
-
-void print_pipe_statuses(TSlaveInfo slavesInfo[]);
+void end_data_sending(TSharedData* ptr, TSemaphore* sem, int index);
 
 int current_index = 1; // indice del archivo a procesar
 
@@ -120,9 +119,9 @@ int main(int argc, char *argv[]) {
 
                 ssize_t bytes_read;
                 while (slavesInfo[i].filesToProcess > 0) {
-                    char buffer[BUFFER_SIZE];
+                    char buffer[RESPONSE_SIZE * initial_files_qty];
 
-                    bytes_read = read(fdSlave, buffer, BUFFER_SIZE);
+                    bytes_read = read(fdSlave, buffer, (RESPONSE_SIZE * initial_files_qty));
     
                     if (bytes_read == -1) ERROR_HANDLING(PIPE_READING);
                     else if (bytes_read == 0) break;
@@ -170,17 +169,21 @@ int main(int argc, char *argv[]) {
         }
     }
 
-    send_finishing_data(shm_main_ptr, total_files);
-    post_semaphore(sem_main);
+    end_data_sending(shm_main_ptr, sem_main, total_files);
 
     close_semaphore(sem_main);
     close_shared_memory(shm_main_ptr);
-    
+
     delete_semaphore(APP_VIEW_CONNECTION);
     delete_shared_memory(APP_VIEW_CONNECTION);
 
 
     return 0;
+}
+
+void end_data_sending(TSharedData* ptr, TSemaphore* sem, int index) {
+    send_finishing_data(ptr, index);
+    post_semaphore(sem);
 }
 
 void setup_slaves(TSlaveInfo* slavesInfo, int slotSize) {
