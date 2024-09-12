@@ -14,7 +14,7 @@
 #include "error.h"
 #include "pipe_lib.h"
 
-#define     SLAVE_QTY               5
+#define     BASE_slave_qty          5
 #define     PERCENTAJE_INITIAL      0.1
 
 #define     APP_TO_SLAVE            0
@@ -29,7 +29,7 @@ typedef struct {
 } TSlaveInfo;
 
 void send_file (int pipe_fd, char *arg);
-void setup_slaves(TSlaveInfo* slavesInfo, int slotSize);
+void setup_slaves(TSlaveInfo* slavesInfo, int slave_qty, int slotSize);
 int is_closed(int fd);
 void end_data_sending(TSharedData* ptr, TSemaphore* sem, int index);
 
@@ -37,7 +37,13 @@ int current_index = 1; // indice del archivo a procesar
 
 int main(int argc, char *argv[]) {
     int total_files = argc - 1;
-    TSlaveInfo slavesInfo[SLAVE_QTY];
+
+    int slave_qty = BASE_slave_qty;
+
+    if (total_files < BASE_slave_qty)  // No vamos a generar esclavos de mas
+        slave_qty = total_files;
+
+    TSlaveInfo slavesInfo[slave_qty];
 
     if(total_files == 0)
         ERROR_HANDLING(NO_FILES_ENTERED);
@@ -45,13 +51,13 @@ int main(int argc, char *argv[]) {
     int initial_files_qty = total_files * PERCENTAJE_INITIAL;
 
     if (initial_files_qty == 0) {
-        initial_files_qty = SLAVE_QTY; // De no haber suficientes archivos, entonces cada esclavo procesará uno único
+        initial_files_qty = slave_qty; // De no haber suficientes archivos, entonces cada esclavo procesará uno único
     }
 
-    int files_per_slave = initial_files_qty / SLAVE_QTY;
+    int files_per_slave = initial_files_qty / slave_qty;
     int remaining_files = total_files;
 
-    setup_slaves(slavesInfo, files_per_slave);
+    setup_slaves(slavesInfo, slave_qty, files_per_slave);
 
     TSharedData* shm_main_ptr = create_shared_memory(APP_VIEW_CONNECTION);
     TSemaphore* sem_main = create_semaphore(APP_VIEW_CONNECTION);
@@ -60,14 +66,14 @@ int main(int argc, char *argv[]) {
     printf(APP_VIEW_CONNECTION);
     fflush(stdout);
 
-    for(int i = 0; i < SLAVE_QTY; i++){
+    for(int i = 0; i < slave_qty; i++){
         int pid = fork();
 
         if(pid < 0) ERROR_HANDLING(PROCESS_CREATING);
 
         else if (pid == 0) { // Este es el proceso hijo
 
-            for (int j = 0; j < SLAVE_QTY; j++) {
+            for (int j = 0; j < slave_qty; j++) {
                 if (j != i) { 
                     close(slavesInfo[j].pipes[APP_TO_SLAVE].fdR);
                     close(slavesInfo[j].pipes[APP_TO_SLAVE].fdW);
@@ -97,7 +103,7 @@ int main(int argc, char *argv[]) {
         }
     }
     // Envio de datos
-    for (int i = 0; i < SLAVE_QTY; i++) {
+    for (int i = 0; i < slave_qty; i++) {
         for(int f = 0; f < files_per_slave; f++) {
             send_file(slavesInfo[i].pipes[APP_TO_SLAVE].fdW, argv[current_index]);
         }
@@ -107,13 +113,13 @@ int main(int argc, char *argv[]) {
         fd_set fdSet;
         FD_ZERO(&fdSet);
 
-        for(int i = 0; i < SLAVE_QTY; i++){
+        for(int i = 0; i < slave_qty; i++){
             if (!is_closed(slavesInfo[i].pipes[SLAVE_TO_APP].fdR)) FD_SET(slavesInfo[i].pipes[SLAVE_TO_APP].fdR, &fdSet); // Agregamos este file descriptor para que se lo tenga en cuenta a la hora de escuchar cambios
         }
 
-        if (select(slavesInfo[SLAVE_QTY-1].pipes[SLAVE_TO_APP].fdR+1, &fdSet, NULL, NULL, NULL) < 0) ERROR_HANDLING(FDS_SELECT);
+        if (select(slavesInfo[slave_qty-1].pipes[SLAVE_TO_APP].fdR+1, &fdSet, NULL, NULL, NULL) < 0) ERROR_HANDLING(FDS_SELECT);
 
-        for (int i = 0; i < SLAVE_QTY; i++) {
+        for (int i = 0; i < slave_qty; i++) {
             int fdSlave = slavesInfo[i].pipes[SLAVE_TO_APP].fdR;
             if (FD_ISSET(fdSlave, &fdSet)) {
 
@@ -186,8 +192,8 @@ void end_data_sending(TSharedData* ptr, TSemaphore* sem, int index) {
     post_semaphore(sem);
 }
 
-void setup_slaves(TSlaveInfo* slavesInfo, int slotSize) {
-    for (int i = 0; i < SLAVE_QTY; i++) {
+void setup_slaves(TSlaveInfo* slavesInfo, int slave_qty, int slotSize) {
+    for (int i = 0; i < slave_qty; i++) {
         int pipe1[2];
         if (pipe(pipe1) == -1) ERROR_HANDLING(APP_SLAVE_PIPE_CREATION);
 
