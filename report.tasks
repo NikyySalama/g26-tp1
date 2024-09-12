@@ -1,6 +1,3 @@
 pvs-studio.com/en/docs/warnings/	1	err	Help: The documentation for all analyzer warnings is available here: https://pvs-studio.com/en/docs/warnings/.
-/root/Desktop/ITBA/SO/TP1/globals.h	7	note	V1003 The macro 'BUFFER_SIZE' is a dangerous expression. The expression must be surrounded by parentheses.
-/root/Desktop/ITBA/SO/TP1/main.c	147	warn	V557 Array underrun is possible. The value of 'bytes_read - 1' index could reach -2.
-/root/Desktop/ITBA/SO/TP1/main.c	144	warn	V575 The 'strncpy' function processes 'bytes_read = [-1..33]' elements. Inspect the third argument.
-/root/Desktop/ITBA/SO/TP1/main.c	145	warn	V755 Copying potentially tainted data from 'argv' to buffer 'shm_main_ptr[shm_index].fileName'. Buffer overflow is possible.
-/root/Desktop/ITBA/SO/TP1/main.c	163	note	V525 The code contains the collection of similar blocks. Check items 'fdW', 'fdR', 'fdR' in lines 163, 164, 165.
+/root/Desktop/ITBA/SO/TP1/main.c	162	note	V525 The code contains the collection of similar blocks. Check items 'fdW', 'fdR', 'fdR' in lines 162, 163, 164.
+/root/Desktop/ITBA/SO/TP1/slave.c	39	err	V1010 Unchecked tainted data is used in the third argument: 'file_name'. Check lines: 39, 20.

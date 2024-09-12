@@ -136,7 +136,7 @@ int main(int argc, char *argv[]) {
                         
                         if (file == NULL) ERROR_HANDLING(FILE_OPENING);
 
-                        fprintf(file, "%s", slave_response);
+                        fprintf(file, "\n%s", slave_response);
 
                         fclose(file);
 
