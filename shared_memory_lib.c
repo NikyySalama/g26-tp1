@@ -11,6 +11,13 @@
 #include <string.h>
 #include "error.h"
 
+
+const TSharedData ending_data = {
+    .slavePID = ENDING_PID,
+    .response = ENDING_RESPONSE,
+    .fileName = ENDING_FILENAME
+};
+
 TSharedData* create_shared_memory(char* name){
     int shm_fd = shm_open(name, O_CREAT | O_RDWR, SHARED_MEMORY_PERMISSIONS);
     if (shm_fd == -1) ERROR_HANDLING(SHARED_MEMORY_OPENING);
@@ -35,7 +42,12 @@ TSharedData* get_shared_memory(char* name) {
     return (TSharedData*) ptr;
 }
 
-void end_shared_memory(void* ptr) {
+void send_finishing_data(TSharedData* ptr, int index) {
+    ptr[index] = ending_data;
+}
+
+void close_shared_memory(void* ptr) {
+
     if (munmap(ptr, SHARED_MEMORY_SIZE) == -1) ERROR_HANDLING(SHARED_MEMORY_UNMAPPING);
 }
 

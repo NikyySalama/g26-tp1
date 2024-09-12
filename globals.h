@@ -8,7 +8,8 @@
 #define MAX_FILES               256
 #define MARGIN                  5
 
-#define BUFFER_SIZE             (MD5_SIZE+MAX_FILENAME+MARGIN)
+#define RESPONSE_SIZE           (MD5_SIZE+MAX_FILENAME+MARGIN)
+#define BUFFER_SIZE             (RESPONSE_SIZE * 2) // TODO cambiar por la cantidad inicial del slave
 
 #define DELIMITER               ","
 

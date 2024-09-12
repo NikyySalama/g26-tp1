@@ -3,6 +3,7 @@
         "*.properties": "java-properties",
         "unistd.h": "c",
         "cstdlib": "c",
-        "mman.h": "c"
+        "mman.h": "c",
+        "semaphore_lib.h": "c"
     }
 }

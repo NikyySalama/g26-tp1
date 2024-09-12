@@ -30,7 +30,11 @@ void wait_semaphore(TSemaphore* semaphore){
 void post_semaphore(TSemaphore* semaphore){
     if (sem_post(semaphore) == -1) ERROR_HANDLING(SEMAPHORE_POSTING);
 }
-void delete_semaphore(char* name, TSemaphore* semaphore){
+
+void close_semaphore(TSemaphore* semaphore) {
     if (sem_close(semaphore) == -1) ERROR_HANDLING(SEMAPHORE_CLOSING);
+}
+
+void delete_semaphore(char* name){
     if (sem_unlink(name) == -1) ERROR_HANDLING(SEMAPHORE_DESTROYING);
 }

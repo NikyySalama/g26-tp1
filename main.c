@@ -143,16 +143,16 @@ int main(int argc, char *argv[]) {
 
                         // Procesamos la línea (respuesta de un slave)
                         
-                        //populate_data_from_string(slave_response, DELIMITER, &(shm_main_ptr[shm_index]));
+                        populate_data_from_string(slave_response, DELIMITER, &(shm_main_ptr[shm_index]));
                         
-                        printf("Procesado: %s\n", slave_response);
+                        printf("\n%s", slave_response);
 
                         post_semaphore(sem_main);
                         remaining_files--;
                         slavesInfo[i].filesToProcess--;
 
                         slave_response = strtok(NULL, "\t");
-                    }
+                    }   
                 }
                 
                 if(slavesInfo[i].filesToProcess == 0) { // el slave ya no tiene archivos a procesar
@@ -169,10 +169,16 @@ int main(int argc, char *argv[]) {
             }
         }
     }
+
+    send_finishing_data(shm_main_ptr, total_files);
+    post_semaphore(sem_main);
+
+    close_semaphore(sem_main);
+    close_shared_memory(shm_main_ptr);
     
-    end_shared_memory(shm_main_ptr);
+    delete_semaphore(APP_VIEW_CONNECTION);
     delete_shared_memory(APP_VIEW_CONNECTION);
-    delete_semaphore(APP_VIEW_CONNECTION, sem_main);
+
 
     return 0;
 }

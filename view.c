@@ -27,14 +27,23 @@ int main(int argc, char const *argv[]) {
     TSharedData* shm_view_ptr = get_shared_memory(shared_memory_buffer);
     TSemaphore* sem_view = get_semaphore(shared_memory_buffer);
 
-    int s = 0;
-    while (s < 100) {
+    TSharedData data_read;
+
+    
+    int index = 0;
+    wait_semaphore(sem_view);
+    data_read = shm_view_ptr[index];
+
+    while (strcmp(data_read.response, ENDING_RESPONSE) != 0) {
+        printf("VIEW[%d]: Slave ID: %d, MD5: %s, FILE: %s\n", index, shm_view_ptr[index].slavePID, shm_view_ptr[index].response, shm_view_ptr[index].fileName);
+        index++;
         wait_semaphore(sem_view);
-        printf("VIEW[%d]: Slave ID: %d, MD5: %s, FILE: %s\n",s, shm_view_ptr[s].slavePID, shm_view_ptr[s].response, shm_view_ptr[s].fileName);
-        // printf("%s\n", shm_view_ptr[s++]);
+        data_read = shm_view_ptr[index];
     }
     
     printf("\nVIEW FINISHED\n");
 
+    close_semaphore(sem_view);
+    close_shared_memory(shm_view_ptr);
     return 0;
 }

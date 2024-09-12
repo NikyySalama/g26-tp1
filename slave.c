@@ -12,13 +12,13 @@
 #define CONTENIDO_BUFFER "%d"DELIMITER"%s"DELIMITER"%s\t" // PID, FILE, MD5
 
 int main(int argc, char *argv[]) {
-    char buffer[BUFFER_SIZE];
+    char file_name[FILENAME_MAX];
     char mds5[MD5_SIZE+1];
     TPipe md5_pipe;
     int pipe1[2];
 
-    while (fgets(buffer, BUFFER_SIZE, stdin) != NULL) {
-        buffer[strcspn(buffer, "\n")] = '\0';
+    while (fgets(file_name, FILENAME_MAX, stdin) != NULL) {
+        file_name[strcspn(file_name, "\n")] = '\0';
 
         if (pipe(pipe1) == -1)
             ERROR_HANDLING(SLAVE_MD5_PIPE_CREATION); 
@@ -36,7 +36,7 @@ int main(int argc, char *argv[]) {
             dup2(md5_pipe.fdW, STDOUT_FILENO);
             close(md5_pipe.fdW);
 
-            execlp("md5sum", "md5sum", buffer, NULL);
+            execlp("md5sum", "md5sum", file_name, NULL);
             
             // Por si falla execlp
             ERROR_HANDLING(CHILD_PROCESS_EXECUTING);
@@ -48,8 +48,8 @@ int main(int argc, char *argv[]) {
                 ERROR_HANDLING(PIPE_READING);
 
             close(md5_pipe.fdR);
-
-            printf(CONTENIDO_BUFFER, getpid(), buffer, mds5);
+            
+            printf(CONTENIDO_BUFFER, getpid(), file_name, mds5);
             fflush(stdout);
         }
     }
