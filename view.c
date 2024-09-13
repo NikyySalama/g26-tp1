@@ -35,7 +35,7 @@ int main(int argc, char const *argv[]) {
     data_read = shm_view_ptr[index];
 
     while (strcmp(data_read.response, ENDING_RESPONSE) != 0) {
-        printf("VIEW[%d]: Slave ID: %d, MD5: %s, FILE: %s\n", index, shm_view_ptr[index].slavePID, shm_view_ptr[index].response, shm_view_ptr[index].fileName);
+        printf("VIEW[%d]: Slave OID: %d, MD5: %s, FILE: %s\n", index, shm_view_ptr[index].slavePID, shm_view_ptr[index].response, shm_view_ptr[index].fileName);
         index++;
         wait_semaphore(sem_view);
         data_read = shm_view_ptr[index];

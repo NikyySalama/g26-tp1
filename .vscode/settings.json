@@ -4,6 +4,10 @@
         "unistd.h": "c",
         "cstdlib": "c",
         "mman.h": "c",
-        "semaphore_lib.h": "c"
+        "semaphore_lib.h": "c",
+        "error.h": "c",
+        "globals.h": "c",
+        "utils.h": "c",
+        "string.h": "c"
     }
 }
