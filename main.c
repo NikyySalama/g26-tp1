@@ -133,8 +133,9 @@ int main(int argc, char *argv[]) {
                     else if (bytes_read == 0) break;
 
                     buffer[bytes_read] = '\0';
-
-                    char *slave_response = strtok(buffer, "\t");
+                    
+                    char* save_ptr;
+                    char *slave_response = strtok_r(buffer, "\t", &save_ptr);
                     while (slave_response != NULL) {
                         int shm_index = total_files - remaining_files;
 
@@ -156,7 +157,7 @@ int main(int argc, char *argv[]) {
                         remaining_files--;
                         slavesInfo[i].filesToProcess--;
 
-                        slave_response = strtok(NULL, "\t");
+                        slave_response = strtok_r(NULL, "\t", &save_ptr);
                     }   
                 }
                 
