@@ -12,7 +12,7 @@
 #include <sys/time.h>
 
 
-#define     BASE_SLAVE_QTY          20
+#define     BASE_SLAVE_QTY          10
 #define     S_WAIT_FOR_VIEW         3
 #define     APP_VIEW_CONNECTION     "/app_view_connection"
 
@@ -40,7 +40,7 @@ int main(int argc, char *argv[]) {
     TSharedData* shm_main_ptr = create_shared_memory(APP_VIEW_CONNECTION);
     TSemaphore* sem_main = create_semaphore(APP_VIEW_CONNECTION);
 
-    printf(APP_VIEW_CONNECTION);
+    printf(APP_VIEW_CONNECTION"\n");
     sleep(S_WAIT_FOR_VIEW); // Esperamos a que haya un proceso vista para conectar la salida
     fflush(stdout);
 
@@ -123,7 +123,7 @@ int main(int argc, char *argv[]) {
                         
                         if (file == NULL) ERROR_HANDLING(FILE_OPENING);
 
-                        fprintf(file, "\n%s", slave_response);
+                        fprintf(file, "%s\n", slave_response);
 
                         fclose(file);
 
