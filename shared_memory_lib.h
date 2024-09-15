@@ -11,7 +11,7 @@
 #ifndef SHARED_MEMORY_LIB_H
 #define SHARED_MEMORY_LIB_H
 
-#define MAX_FILES                   256
+#define MAX_FILES                   512
 
 
 #define SHARED_MEMORY_SIZE          (sizeof(TSharedData) * MAX_FILES)
