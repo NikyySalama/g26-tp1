@@ -47,7 +47,7 @@
 
 // Mensajes de error de tokenización
 #define ERROR_DUPLICATING_STRING                "No se pudo duplicar la cadena\n"
-#define ERROR_PARSING_SLAVE_PID                 "No se pudo parsear el slavePID\n"
+#define ERROR_PARSING_SLAVE_PID                 "No se pudo parsear el slave_pid\n"
 #define ERROR_PARSING_FILENAME                  "No se pudo parsear el nombre del archivo\n"
 #define ERROR_PARSING_RESPONSE                  "No se pudo parsear la respuesta (MD5)\n"
 

@@ -13,7 +13,7 @@
 
 
 #define     BASE_SLAVE_QTY          10
-#define     S_WAIT_FOR_VIEW         3
+#define     S_WAIT_FOR_VIEW         5
 #define     APP_VIEW_CONNECTION     "/app_view_connection"
 
 
@@ -26,7 +26,7 @@ int main(int argc, char *argv[]) {
     if (total_files < BASE_SLAVE_QTY)  // No vamos a generar esclavos de mas
         slave_qty = total_files;
 
-    TSlaveInfo slavesInfo[slave_qty];
+    TSlaveInfo slaves_info[slave_qty];
 
     if(total_files == 0)
         ERROR_HANDLING(NO_FILES_ENTERED);
@@ -35,14 +35,14 @@ int main(int argc, char *argv[]) {
 
     int files_per_slave = setup_file_distribution(slave_qty, total_files, &initial_files_qty);
 
-    setup_slaves(slavesInfo, slave_qty, files_per_slave);
+    setup_slaves(slaves_info, slave_qty, files_per_slave);
 
     TSharedData* shm_main_ptr = create_shared_memory(APP_VIEW_CONNECTION);
     TSemaphore* sem_main = create_semaphore(APP_VIEW_CONNECTION);
 
-    printf(APP_VIEW_CONNECTION"\n");
-    sleep(S_WAIT_FOR_VIEW); // Esperamos a que haya un proceso vista para conectar la salida
+    printf(APP_VIEW_CONNECTION);
     fflush(stdout);
+    sleep(S_WAIT_FOR_VIEW); // Esperamos a que haya un proceso vista para conectar la salida
 
     for(int i = 0; i < slave_qty; i++){
         int pid = fork();
@@ -53,21 +53,21 @@ int main(int argc, char *argv[]) {
 
             for (int j = 0; j < slave_qty; j++) {
                 if (j != i) { 
-                    close(slavesInfo[j].pipes[APP_TO_SLAVE].fdR);
-                    close(slavesInfo[j].pipes[APP_TO_SLAVE].fdW);
-                    close(slavesInfo[j].pipes[SLAVE_TO_APP].fdR);
-                    close(slavesInfo[j].pipes[SLAVE_TO_APP].fdW);
+                    close(slaves_info[j].pipes[APP_TO_SLAVE].fd_R);
+                    close(slaves_info[j].pipes[APP_TO_SLAVE].fd_W);
+                    close(slaves_info[j].pipes[SLAVE_TO_APP].fd_R);
+                    close(slaves_info[j].pipes[SLAVE_TO_APP].fd_W);
                 }
             }
         
-            close(slavesInfo[i].pipes[APP_TO_SLAVE].fdW);
-            close(slavesInfo[i].pipes[SLAVE_TO_APP].fdR);
+            close(slaves_info[i].pipes[APP_TO_SLAVE].fd_W);
+            close(slaves_info[i].pipes[SLAVE_TO_APP].fd_R);
 
-            dup2(slavesInfo[i].pipes[APP_TO_SLAVE].fdR, STDIN_FILENO); // Lo que escriba la app se redirige a STDIN para que el eslcavo lo levante de ahi            
-            close(slavesInfo[i].pipes[APP_TO_SLAVE].fdR);
+            dup2(slaves_info[i].pipes[APP_TO_SLAVE].fd_R, STDIN_FILENO); // Lo que escriba la app se redirige a STDIN para que el eslcavo lo levante de ahi            
+            close(slaves_info[i].pipes[APP_TO_SLAVE].fd_R);
 
-            dup2(slavesInfo[i].pipes[SLAVE_TO_APP].fdW, STDOUT_FILENO); // El proceso slave escribe en STDOUT, y queremos que esto se pipee al fdW correspondiente
-            close(slavesInfo[i].pipes[SLAVE_TO_APP].fdW);
+            dup2(slaves_info[i].pipes[SLAVE_TO_APP].fd_W, STDOUT_FILENO); // El proceso slave escribe en STDOUT, y queremos que esto se pipee al fd_W correspondiente
+            close(slaves_info[i].pipes[SLAVE_TO_APP].fd_W);
 
             char *args[] = {"./slave.o", NULL};
             execve(args[0], args, NULL);
@@ -76,14 +76,14 @@ int main(int argc, char *argv[]) {
             ERROR_HANDLING(CHILD_PROCESS_EXECUTING);
 
         } else { // Proceso padre
-            close(slavesInfo[i].pipes[APP_TO_SLAVE].fdR);
-            close(slavesInfo[i].pipes[SLAVE_TO_APP].fdW);
+            close(slaves_info[i].pipes[APP_TO_SLAVE].fd_R);
+            close(slaves_info[i].pipes[SLAVE_TO_APP].fd_W);
         }
     }
     // Envio de datos
     for (int i = 0; i < slave_qty; i++) {
         for(int f = 0; f < files_per_slave; f++) {
-            send_file(slavesInfo[i].pipes[APP_TO_SLAVE].fdW, argv[current_index], &current_index);
+            send_file(slaves_info[i].pipes[APP_TO_SLAVE].fd_W, argv[current_index], &current_index);
         }
     }
 
@@ -94,20 +94,20 @@ int main(int argc, char *argv[]) {
         FD_ZERO(&fdSet);
 
         for(int i = 0; i < slave_qty; i++){
-            if (!is_closed(slavesInfo[i].pipes[SLAVE_TO_APP].fdR)) FD_SET(slavesInfo[i].pipes[SLAVE_TO_APP].fdR, &fdSet); // Agregamos este file descriptor para que se lo tenga en cuenta a la hora de escuchar cambios
+            if (!is_closed(slaves_info[i].pipes[SLAVE_TO_APP].fd_R)) FD_SET(slaves_info[i].pipes[SLAVE_TO_APP].fd_R, &fdSet); // Agregamos este file descriptor para que se lo tenga en cuenta a la hora de escuchar cambios
         }
 
-        if (select(slavesInfo[slave_qty-1].pipes[SLAVE_TO_APP].fdR+1, &fdSet, NULL, NULL, NULL) < 0) ERROR_HANDLING(FDS_SELECT);
+        if (select(slaves_info[slave_qty-1].pipes[SLAVE_TO_APP].fd_R+1, &fdSet, NULL, NULL, NULL) < 0) ERROR_HANDLING(FDS_SELECT);
 
         for (int i = 0; i < slave_qty; i++) {
-            int fdSlave = slavesInfo[i].pipes[SLAVE_TO_APP].fdR;
-            if (FD_ISSET(fdSlave, &fdSet)) {
+            int fd_slave = slaves_info[i].pipes[SLAVE_TO_APP].fd_R;
+            if (FD_ISSET(fd_slave, &fdSet)) {
 
                 ssize_t bytes_read;
-                if (slavesInfo[i].filesToProcess > 0) {
+                if (slaves_info[i].files_to_process > 0) {
                     char buffer[RESPONSE_SIZE * initial_files_qty];
 
-                    bytes_read = read(fdSlave, buffer, (RESPONSE_SIZE * initial_files_qty));
+                    bytes_read = read(fd_slave, buffer, (RESPONSE_SIZE * initial_files_qty));
     
                     if (bytes_read == -1) ERROR_HANDLING(PIPE_READING);
                     else if (bytes_read == 0) break;
@@ -115,7 +115,7 @@ int main(int argc, char *argv[]) {
                     buffer[bytes_read] = '\0';
                     
                     char* save_ptr;
-                    char *slave_response = strtok_r(buffer, "\t", &save_ptr);
+                    char *slave_response = strtok_r(buffer, SEPARATOR, &save_ptr);
                     while (slave_response != NULL) {
                         int shm_index = total_files - remaining_files;
 
@@ -133,21 +133,21 @@ int main(int argc, char *argv[]) {
 
                         post_semaphore(sem_main);
                         remaining_files--;
-                        slavesInfo[i].filesToProcess--;
+                        slaves_info[i].files_to_process--;
 
-                        slave_response = strtok_r(NULL, "\t", &save_ptr);
+                        slave_response = strtok_r(NULL, SEPARATOR, &save_ptr);
                     }   
                 }
                 
-                if(slavesInfo[i].filesToProcess == 0) { // el slave ya no tiene archivos a procesar
+                if(slaves_info[i].files_to_process == 0) { // el slave ya no tiene archivos a procesar
                     if(current_index <= total_files){
-                        send_file(slavesInfo[i].pipes[APP_TO_SLAVE].fdW, argv[current_index], &current_index);
-                        slavesInfo[i].filesToProcess++;
+                        send_file(slaves_info[i].pipes[APP_TO_SLAVE].fd_W, argv[current_index], &current_index);
+                        slaves_info[i].files_to_process++;
                     } else{ // no hay mas files para procesar
-                        close(slavesInfo[i].pipes[APP_TO_SLAVE].fdW);
-                        close(slavesInfo[i].pipes[APP_TO_SLAVE].fdR);
-                        close(slavesInfo[i].pipes[SLAVE_TO_APP].fdR);
-                        // no es necesario cerrar slavesInfo[i].pipes[SLAVE_TO_APP].fdW porque se cierra automaticamente con la muerte del slave
+                        close(slaves_info[i].pipes[APP_TO_SLAVE].fd_W);
+                        close(slaves_info[i].pipes[APP_TO_SLAVE].fd_R);
+                        close(slaves_info[i].pipes[SLAVE_TO_APP].fd_R);
+                        // no es necesario cerrar slaves_info[i].pipes[SLAVE_TO_APP].fd_W porque se cierra automaticamente con la muerte del slave
                     }
                 }
             }

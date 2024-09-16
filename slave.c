@@ -5,20 +5,21 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/wait.h>
+#include <libgen.h>
 #include "globals.h"
 #include "pipe_lib.h"
 #include "error.h"
 
-#define CONTENIDO_BUFFER "%d"DELIMITER"%s"DELIMITER"%s\t" // PID, FILE, MD5
+#define CONTENIDO_BUFFER "%d"DELIMITER"%s"DELIMITER"%s"SEPARATOR // PID, FILE, MD5
 
 int main(int argc, char *argv[]) {
-    char file_name[FILENAME_MAX];
+    char file_path[MAX_FILEPATH];
     char mds5[MD5_SIZE+1];
     TPipe md5_pipe;
     int pipe1[2];
 
-    while (fgets(file_name, FILENAME_MAX, stdin) != NULL) {
-        file_name[strcspn(file_name, "\n")] = '\0';
+    while (fgets(file_path, MAX_FILEPATH, stdin) != NULL) {
+        file_path[strcspn(file_path, "\n")] = '\0';
 
         if (pipe(pipe1) == -1)
             ERROR_HANDLING(SLAVE_MD5_PIPE_CREATION); 
@@ -36,7 +37,7 @@ int main(int argc, char *argv[]) {
             dup2(md5_pipe.fdW, STDOUT_FILENO);
             close(md5_pipe.fdW);
 
-            execlp("md5sum", "md5sum", file_name, NULL);
+            execlp("md5sum", "md5sum", file_path, NULL);
             
             // Por si falla execlp
             ERROR_HANDLING(CHILD_PROCESS_EXECUTING);
@@ -49,7 +50,9 @@ int main(int argc, char *argv[]) {
 
             close(md5_pipe.fdR);
             
-            printf(CONTENIDO_BUFFER, getpid(), file_name, mds5);
+            char *file_basename = basename((char *)file_path); // Extraemos el nombre del archivo
+            
+            printf(CONTENIDO_BUFFER, getpid(), file_basename, mds5);
             fflush(stdout);
         }
     }

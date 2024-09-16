@@ -20,9 +20,12 @@
 int main(int argc, char const *argv[]) {
 
     char shared_memory_buffer[RESPONSE_SIZE];
-    int bytesRead = 0;
-    if ((bytesRead = read(STDIN_FILENO, shared_memory_buffer, RESPONSE_SIZE - 1)) == -1) ERROR_HANDLING(STDIN_READING);
-    shared_memory_buffer[bytesRead] = '\0';
+    int bytes_read = 0;
+
+    if ((bytes_read = read(STDIN_FILENO, shared_memory_buffer, RESPONSE_SIZE - 1)) == -1)
+        ERROR_HANDLING(STDIN_READING);
+    
+    shared_memory_buffer[bytes_read] = '\0';
 
     TSharedData* shm_view_ptr = get_shared_memory(shared_memory_buffer);
     TSemaphore* sem_view = get_semaphore(shared_memory_buffer);
@@ -35,7 +38,7 @@ int main(int argc, char const *argv[]) {
     data_read = shm_view_ptr[index];
 
     while (strcmp(data_read.response, ENDING_RESPONSE) != 0) {
-        printf("VIEW[%d]: Slave PID: %d, MD5: %s, FILE: %s\n", index, shm_view_ptr[index].slavePID, shm_view_ptr[index].response, shm_view_ptr[index].fileName);
+        printf("VIEW[%d]: Slave PID: %d, MD5: %s, FILE: %s\n", index, shm_view_ptr[index].slave_pid, shm_view_ptr[index].response, shm_view_ptr[index].fileName);
         index++;
         wait_semaphore(sem_view);
         data_read = shm_view_ptr[index];

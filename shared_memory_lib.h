@@ -25,9 +25,9 @@
  * @brief Estructura que representa los datos compartidos.
  */
 typedef struct {
-    int slavePID;
+    int slave_pid;
     char response[MD5_SIZE+1];
-    char fileName[MAX_FILENAME];
+    char file_name[MAX_FILEPATH];
 } TSharedData;
 
 

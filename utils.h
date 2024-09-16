@@ -22,7 +22,7 @@
 
 typedef struct {
     TPipe pipes[2];
-    int filesToProcess;
+    int files_to_process;
 } TSlaveInfo;
 
 #define     APP_TO_SLAVE            0

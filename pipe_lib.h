@@ -1,6 +1,6 @@
 typedef struct {
-    int fdR;
-    int fdW;
+    int fd_R;
+    int fd_W;
 } TPipe;
 
 #define     W_END                   1

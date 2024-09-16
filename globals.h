@@ -8,12 +8,13 @@
 #define GLOBALS_H
 
 #define MD5_SIZE                32
-#define MAX_FILENAME            30
+#define MAX_FILEPATH            60
 #define MARGIN                  5
 
-#define RESPONSE_SIZE           (MD5_SIZE+MAX_FILENAME+MARGIN)
+#define RESPONSE_SIZE           (MD5_SIZE+MAX_FILEPATH+MARGIN)
 
 #define DELIMITER               ","
+#define SEPARATOR               "\t"
 
 
 #endif

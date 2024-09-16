@@ -61,3 +61,5 @@ main
 slave
 
 *.lic
+
+md5Files/

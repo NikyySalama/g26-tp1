@@ -12,9 +12,9 @@
 #include "error.h"
 
 const TSharedData ending_data = {
-    .slavePID = ENDING_PID,
+    .slave_pid = ENDING_PID,
     .response = ENDING_RESPONSE,
-    .fileName = ENDING_FILENAME
+    .file_name = ENDING_FILENAME
 };
 
 TSharedData* create_shared_memory(char* name){
@@ -65,15 +65,15 @@ void populate_data_from_string(const char *str, char* delim, TSharedData *shared
         ERROR_HANDLING(ERROR_PARSING_SLAVE_PID);
     }
 
-    shared_data->slavePID = atoi(token);
+    shared_data->slave_pid = atoi(token);
 
     token = strtok(NULL, delim);
     if (token == NULL) {
         free(str_copy);
         ERROR_HANDLING(ERROR_PARSING_FILENAME);
     }
-    strncpy(shared_data->fileName, token, MAX_FILENAME);
-    shared_data->fileName[MAX_FILENAME - 1] = '\0';
+    strncpy(shared_data->file_name, token, MAX_FILEPATH);
+    shared_data->file_name[MAX_FILEPATH - 1] = '\0';
 
     token = strtok(NULL, delim);
     if (token == NULL) {
