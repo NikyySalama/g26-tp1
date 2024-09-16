@@ -13,7 +13,7 @@
 
 #define     BASE_SLAVE_QTY          10
 #define     S_WAIT_FOR_VIEW         5
-#define     APP_VIEW_CONNECTION     "/app_view_connection"
+#define     APP_VIEW_CONNECTION     "/main_view_connection"
 
 
 int main(int argc, char *argv[]) {

@@ -29,7 +29,7 @@ clean:
 
 test: pvs valgrind
 
-VALGRIND_ARGS ?= ./md5Files/*.txt
+VALGRIND_ARGS ?= ./main ./md5Files/*
 
 pvs: clean
 	@echo "Corriendo PVS-Studio analisis..."
@@ -40,7 +40,7 @@ pvs: clean
 
 valgrind:
 	@echo "Corriendo Valgrind analisis..."
-	@/bin/sh -c "valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes ./main $(VALGRIND_ARGS)"
+	@/bin/sh -c "valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes $(VALGRIND_ARGS)"
 	@echo "Valgrind analisis completado."
 
 .PHONY: all clean test pvs valgrind
