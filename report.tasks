@@ -1,3 +1,0 @@
-pvs-studio.com/en/docs/warnings/	1	err	Help: The documentation for all analyzer warnings is available here: https://pvs-studio.com/en/docs/warnings/.
-/root/Desktop/ITBA/SO/TP1/main.c	162	note	V525 The code contains the collection of similar blocks. Check items 'fdW', 'fdR', 'fdR' in lines 162, 163, 164.
-/root/Desktop/ITBA/SO/TP1/slave.c	39	err	V1010 Unchecked tainted data is used in the third argument: 'file_name'. Check lines: 39, 20.

@@ -25,7 +25,7 @@ semaphore_lib: semaphore_lib.c semaphore_lib.h globals.h error.h
 
 clean:
 	rm -f main slave view utils semaphore_lib
-	rm -f main slave view $(LIBS) PVS-Studio.log PVS-Studio.err strace_out
+	rm -f main slave view $(LIBS) PVS-Studio.log PVS-Studio.err strace_out *.txt
 
 test: pvs valgrind
 
