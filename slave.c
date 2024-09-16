@@ -24,8 +24,8 @@ int main(int argc, char *argv[]) {
         if (pipe(pipe1) == -1)
             ERROR_HANDLING(SLAVE_MD5_PIPE_CREATION); 
         
-        md5_pipe.fdR = pipe1[R_END];
-        md5_pipe.fdW = pipe1[W_END];
+        md5_pipe.fd_R = pipe1[R_END];
+        md5_pipe.fd_W = pipe1[W_END];
 
 
         pid_t pid = fork();
@@ -33,22 +33,22 @@ int main(int argc, char *argv[]) {
             ERROR_HANDLING(PROCESS_CREATING);
 
         if (pid == 0) {
-            close(md5_pipe.fdR);
-            dup2(md5_pipe.fdW, STDOUT_FILENO);
-            close(md5_pipe.fdW);
+            close(md5_pipe.fd_R);
+            dup2(md5_pipe.fd_W, STDOUT_FILENO);
+            close(md5_pipe.fd_W);
 
             execlp("md5sum", "md5sum", file_path, NULL);
             
             // Por si falla execlp
             ERROR_HANDLING(CHILD_PROCESS_EXECUTING);
         } else { // Parent process
-            close(md5_pipe.fdW);
+            close(md5_pipe.fd_W);
             wait(NULL);
 
-            if (read(md5_pipe.fdR, mds5, MD5_SIZE + 1) <= 0) 
+            if (read(md5_pipe.fd_R, mds5, MD5_SIZE + 1) <= 0) 
                 ERROR_HANDLING(PIPE_READING);
 
-            close(md5_pipe.fdR);
+            close(md5_pipe.fd_R);
             
             char *file_basename = basename((char *)file_path); // Extraemos el nombre del archivo
             

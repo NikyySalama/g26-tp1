@@ -28,16 +28,16 @@ void setup_slaves(TSlaveInfo* slavesInfo, int slave_qty, int slotSize) {
         int pipe1[2];
         if (pipe(pipe1) == -1) ERROR_HANDLING(APP_SLAVE_PIPE_CREATION);
 
-        slavesInfo[i].pipes[APP_TO_SLAVE].fdR = pipe1[R_END];
-        slavesInfo[i].pipes[APP_TO_SLAVE].fdW = pipe1[W_END];
+        slavesInfo[i].pipes[APP_TO_SLAVE].fd_R = pipe1[R_END];
+        slavesInfo[i].pipes[APP_TO_SLAVE].fd_W = pipe1[W_END];
 
         int pipe2[2];
         if (pipe(pipe2) == -1) ERROR_HANDLING(SLAVE_APP_PIPE_CREATION);
 
-        slavesInfo[i].pipes[SLAVE_TO_APP].fdR = pipe2[R_END];
-        slavesInfo[i].pipes[SLAVE_TO_APP].fdW = pipe2[W_END];
+        slavesInfo[i].pipes[SLAVE_TO_APP].fd_R = pipe2[R_END];
+        slavesInfo[i].pipes[SLAVE_TO_APP].fd_W = pipe2[W_END];
     
-        slavesInfo[i].filesToProcess = slotSize;
+        slavesInfo[i].files_to_process = slotSize;
 
     }
 }
