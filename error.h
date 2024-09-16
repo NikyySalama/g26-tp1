@@ -17,8 +17,8 @@
 // Mensajes de error de Pipes
 #define PIPE_READING                            "No se pudo leer del pipe indicado\n"
 #define PIPE_WRITING                            "No se pudo escribir en el pipe indicado\n"
-#define APP_SLAVE_PIPE_CREATION                 "No se pudo crear el pipe app->slave\n"
-#define SLAVE_APP_PIPE_CREATION                 "No se pudo crear el pipe slave->app\n"
+#define APP_SLAVE_PIPE_CREATION                 "No se pudo crear el pipe main->slave\n"
+#define SLAVE_APP_PIPE_CREATION                 "No se pudo crear el pipe slave->main\n"
 #define SLAVE_MD5_PIPE_CREATION                 "No se pudo crear el pipe slave->MD5\n"
 
 // Mensajes de error de procesos
@@ -28,6 +28,9 @@
 // Mensajes de error de File Descriptors
 #define FDS_SELECT                              "No se pudo realizar select() de los FileDescriptors\n"
 #define STDIN_READING                           "No se pudo leer desde la entrada estándar\n"
+
+// Mensaje de error de conexión main-view
+#define NO_CONNECTION_PARAMETER                 "No se pudo establecer conexión entre main y view. Recuerde realizar un pipe de la salida de main, o bien ingresar el identificador de la conexión como parametro al ejecutar view"
 
 // Mensajes de error de semáforos
 #define SEMAPHORE_CREATING                      "No se pudo crear el semáforo\n"

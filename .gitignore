@@ -59,6 +59,13 @@ launch.json
 
 main
 slave
+view
+utils
+shared_memory_lib
+semaphore_lib
+
+*.log
+*.tasks
 
 *.lic
 

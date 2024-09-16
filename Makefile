@@ -3,26 +3,26 @@ LDFLAGS = -lm
 
 all: main slave view
 
-main: main.c shared_memory_lib.o semaphore_lib.o utils.o
-	$(CC) $(CFLAGS) -o main.o main.c shared_memory_lib.o semaphore_lib.o utils.o $(LDFLAGS)
+main: main.c shared_memory_lib semaphore_lib utils
+	$(CC) $(CFLAGS) -o main main.c shared_memory_lib semaphore_lib utils $(LDFLAGS)
 
-slave: slave.c shared_memory_lib.o semaphore_lib.o utils.o
-	$(CC) $(CFLAGS) -o slave.o slave.c shared_memory_lib.o semaphore_lib.o utils.o $(LDFLAGS)
+slave: slave.c shared_memory_lib semaphore_lib utils
+	$(CC) $(CFLAGS) -o slave slave.c shared_memory_lib semaphore_lib utils $(LDFLAGS)
 
-view: view.c shared_memory_lib.o semaphore_lib.o utils.o
-	$(CC) $(CFLAGS) -o view.o view.c shared_memory_lib.o semaphore_lib.o utils.o $(LDFLAGS)
+view: view.c shared_memory_lib semaphore_lib utils
+	$(CC) $(CFLAGS) -o view view.c shared_memory_lib semaphore_lib utils $(LDFLAGS)
 
-utils.o: utils.c utils.h
-	$(CC) $(CFLAGS) -c utils.c
+utils: utils.c utils.h
+	$(CC) $(CFLAGS) -o utils -c utils.c
 
-shared_memory_lib.o: shared_memory_lib.c shared_memory_lib.h globals.h error.h
-	$(CC) $(CFLAGS) -c shared_memory_lib.c
+shared_memory_lib: shared_memory_lib.c shared_memory_lib.h globals.h error.h
+	$(CC) $(CFLAGS) -o shared_memory_lib -c shared_memory_lib.c
 
-semaphore_lib.o: semaphore_lib.c semaphore_lib.h globals.h error.h
-	$(CC) $(CFLAGS) -c semaphore_lib.c
+semaphore_lib: semaphore_lib.c semaphore_lib.h globals.h error.h
+	$(CC) $(CFLAGS) -o semaphore_lib -c semaphore_lib.c
 
 clean:
-	rm -f main slave view *.o
+	rm -f main slave view utils semaphore_lib
 
 test: clean all
 	# PVS-Studio analysis

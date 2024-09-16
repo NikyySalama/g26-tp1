@@ -22,9 +22,15 @@ int main(int argc, char const *argv[]) {
     char shared_memory_buffer[RESPONSE_SIZE];
     int bytes_read = 0;
 
-    if ((bytes_read = read(STDIN_FILENO, shared_memory_buffer, RESPONSE_SIZE - 1)) == -1)
-        ERROR_HANDLING(STDIN_READING);
-    
+    if (argc - 1 == 0) { // Conexión con main mediante el pipe
+        if ((bytes_read = read(STDIN_FILENO, shared_memory_buffer, RESPONSE_SIZE - 1)) == -1)
+            ERROR_HANDLING(STDIN_READING);
+        
+    } else if (argc-1 == 1)  { // Conexión como parametro de ejecución
+        strncpy(shared_memory_buffer, argv[1], RESPONSE_SIZE);
+        bytes_read = strlen(argv[1]);
+    } else ERROR_HANDLING(NO_CONNECTION_PARAMETER); // Para conectar ambos procesos, se debe optar por alguna de las dos alternativas anteriores
+
     shared_memory_buffer[bytes_read] = '\0';
 
     TSharedData* shm_view_ptr = get_shared_memory(shared_memory_buffer);

@@ -18,7 +18,7 @@
 
 
 int main(int argc, char *argv[]) {
-    int current_index = 1; // indice del archivo a procesar
+    int current_index = 1; // Indice del archivo a procesar
     int total_files = argc - 1;
 
     int slave_qty = BASE_SLAVE_QTY;
@@ -53,37 +53,37 @@ int main(int argc, char *argv[]) {
 
             for (int j = 0; j < slave_qty; j++) {
                 if (j != i) { 
-                    close(slaves_info[j].pipes[APP_TO_SLAVE].fd_R);
-                    close(slaves_info[j].pipes[APP_TO_SLAVE].fd_W);
+                    close(slaves_info[j].pipes[MAIN_TO_SLAVE].fd_R);
+                    close(slaves_info[j].pipes[MAIN_TO_SLAVE].fd_W);
                     close(slaves_info[j].pipes[SLAVE_TO_APP].fd_R);
                     close(slaves_info[j].pipes[SLAVE_TO_APP].fd_W);
                 }
             }
         
-            close(slaves_info[i].pipes[APP_TO_SLAVE].fd_W);
+            close(slaves_info[i].pipes[MAIN_TO_SLAVE].fd_W);
             close(slaves_info[i].pipes[SLAVE_TO_APP].fd_R);
 
-            dup2(slaves_info[i].pipes[APP_TO_SLAVE].fd_R, STDIN_FILENO); // Lo que escriba la app se redirige a STDIN para que el eslcavo lo levante de ahi            
-            close(slaves_info[i].pipes[APP_TO_SLAVE].fd_R);
+            dup2(slaves_info[i].pipes[MAIN_TO_SLAVE].fd_R, STDIN_FILENO); // Lo que escriba la app se redirige a STDIN para que el eslcavo lo levante de ahi            
+            close(slaves_info[i].pipes[MAIN_TO_SLAVE].fd_R);
 
             dup2(slaves_info[i].pipes[SLAVE_TO_APP].fd_W, STDOUT_FILENO); // El proceso slave escribe en STDOUT, y queremos que esto se pipee al fd_W correspondiente
             close(slaves_info[i].pipes[SLAVE_TO_APP].fd_W);
 
-            char *args[] = {"./slave.o", NULL};
+            char *args[] = {"./slave", NULL};
             execve(args[0], args, NULL);
 
             // Ante un fallo de execve
             ERROR_HANDLING(CHILD_PROCESS_EXECUTING);
 
         } else { // Proceso padre
-            close(slaves_info[i].pipes[APP_TO_SLAVE].fd_R);
+            close(slaves_info[i].pipes[MAIN_TO_SLAVE].fd_R);
             close(slaves_info[i].pipes[SLAVE_TO_APP].fd_W);
         }
     }
     // Envio de datos
     for (int i = 0; i < slave_qty; i++) {
         for(int f = 0; f < files_per_slave; f++) {
-            send_file(slaves_info[i].pipes[APP_TO_SLAVE].fd_W, argv[current_index], &current_index);
+            send_file(slaves_info[i].pipes[MAIN_TO_SLAVE].fd_W, argv[current_index], &current_index);
         }
     }
 
@@ -141,11 +141,11 @@ int main(int argc, char *argv[]) {
                 
                 if(slaves_info[i].files_to_process == 0) { // el slave ya no tiene archivos a procesar
                     if(current_index <= total_files){
-                        send_file(slaves_info[i].pipes[APP_TO_SLAVE].fd_W, argv[current_index], &current_index);
+                        send_file(slaves_info[i].pipes[MAIN_TO_SLAVE].fd_W, argv[current_index], &current_index);
                         slaves_info[i].files_to_process++;
                     } else{ // no hay mas files para procesar
-                        close(slaves_info[i].pipes[APP_TO_SLAVE].fd_W);
-                        close(slaves_info[i].pipes[APP_TO_SLAVE].fd_R);
+                        close(slaves_info[i].pipes[MAIN_TO_SLAVE].fd_W);
+                        close(slaves_info[i].pipes[MAIN_TO_SLAVE].fd_R);
                         close(slaves_info[i].pipes[SLAVE_TO_APP].fd_R);
                         // no es necesario cerrar slaves_info[i].pipes[SLAVE_TO_APP].fd_W porque se cierra automaticamente con la muerte del slave
                     }

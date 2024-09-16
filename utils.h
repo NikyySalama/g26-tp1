@@ -25,7 +25,7 @@ typedef struct {
     int files_to_process;
 } TSlaveInfo;
 
-#define     APP_TO_SLAVE            0
+#define     MAIN_TO_SLAVE            0
 #define     SLAVE_TO_APP            1
 #define     PERCENTAJE_INITIAL      0.1
 
@@ -68,11 +68,11 @@ int is_closed(int fd);
 /**
  * @brief Configura la información de los esclavos.
  *
- * @param slavesInfo Puntero a la estructura de información de los esclavos.
+ * @param slaves_info Puntero a la estructura de información de los esclavos.
  * @param slave_qty Cantidad de esclavos.
- * @param slotSize Tamaño del slot para cada esclavo.
+ * @param slot_size Tamaño del slot para cada esclavo.
  */
-void setup_slaves(TSlaveInfo* slavesInfo, int slave_qty, int slotSize);
+void setup_slaves(TSlaveInfo* slaves_info, int slave_qty, int slot_size);
 
 
 #endif
