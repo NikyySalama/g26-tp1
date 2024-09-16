@@ -2,14 +2,13 @@
 // PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 #include <stdio.h>
 #include <unistd.h>
+#include <sys/time.h>
 #include <stdlib.h>
 #include <sys/select.h>
-#include <fcntl.h>
 #include "shared_memory_lib.h"
 #include "semaphore_lib.h"
-#include "error.h"
 #include "utils.h"
-#include <sys/time.h>
+#include "error.h"
 
 
 #define     BASE_SLAVE_QTY          10

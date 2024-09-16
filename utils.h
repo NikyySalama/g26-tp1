@@ -1,20 +1,14 @@
-#include "shared_memory_lib.h"
-#include "semaphore_lib.h"
-#include <string.h>
-#include <stdio.h>
-#include <unistd.h>
-#include <stdlib.h>
-#include <sys/wait.h>
-#include <sys/select.h>
-#include <sys/time.h>
-#include <fcntl.h>
-#include <time.h>
-#include "pipe_lib.h"
-#include <stdio.h>
-#include <stdlib.h>
-#include "globals.h"
 #include <math.h>
 #include <errno.h>
+#include <string.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <fcntl.h>
+#include "shared_memory_lib.h"
+#include "semaphore_lib.h"
+#include "pipe_lib.h"
+
 #include "error.h"
 
 #ifndef UTILS_H

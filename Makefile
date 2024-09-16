@@ -5,13 +5,13 @@ LIBS = shared_memory_lib.o semaphore_lib.o utils.o
 
 all: main slave view
 
-main: main.c $(LIBS)
+main: main.c $(LIBS) error.h
 	$(CC) $(CFLAGS) -o main main.c $(LIBS) $(LDFLAGS)
 
-slave: slave.c $(LIBS)
+slave: slave.c $(LIBS) error.h
 	$(CC) $(CFLAGS) -o slave slave.c $(LIBS) $(LDFLAGS)
 
-view: view.c $(LIBS)
+view: view.c $(LIBS) error.h
 	$(CC) $(CFLAGS) -o view view.c $(LIBS) $(LDFLAGS)
 
 utils: utils.c utils.h

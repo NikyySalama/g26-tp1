@@ -8,6 +8,7 @@
         "error.h": "c",
         "globals.h": "c",
         "utils.h": "c",
-        "string.h": "c"
+        "string.h": "c",
+        "pipe_lib.h": "c"
     }
 }

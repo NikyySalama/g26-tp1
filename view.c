@@ -5,9 +5,9 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <fcntl.h>  // Biblioteca necesaria para shm_open
-#include <sys/mman.h>  // Biblioteca necesaria para mmap y shm_open
-#include <unistd.h>  // Biblioteca necesaria para ftruncate
+#include <fcntl.h> 
+#include <sys/mman.h>
+#include <unistd.h> 
 #include <sys/stat.h>
 #include <semaphore.h>
 #include <time.h>

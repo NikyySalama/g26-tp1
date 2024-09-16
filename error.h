@@ -58,7 +58,7 @@
 // Macro
 #define ERROR_HANDLING(error_details)                           \
     do {                                                        \
-        fprintf(stderr, "ERROR: %s:\n", error_details);         \
+        fprintf(stderr, "ERROR: %s", error_details);         \
         exit(EXIT_FAILURE);                                     \
     } while (0)
 #endif
