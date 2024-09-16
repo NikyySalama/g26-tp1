@@ -92,7 +92,7 @@ int main(int argc, char *argv[]) {
                         
     if (file == NULL) ERROR_HANDLING(FILE_OPENING);
 
-    fprintf(file, "PID, MD5, FILE\n");
+    fprintf(file, "PID, FILE, MD5\n");
 
     fclose(file);
 
