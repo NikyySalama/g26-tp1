@@ -88,6 +88,14 @@ int main(int argc, char *argv[]) {
 
     int remaining_files = total_files;
 
+    FILE *file = fopen("results.txt", "w");
+                        
+    if (file == NULL) ERROR_HANDLING(FILE_OPENING);
+
+    fprintf(file, "PID, MD5, FILE\n");
+
+    fclose(file);
+
     while (remaining_files > 0) {
         fd_set fdSet;
         FD_ZERO(&fdSet);
@@ -115,6 +123,7 @@ int main(int argc, char *argv[]) {
                     
                     char* save_ptr;
                     char *slave_response = strtok_r(buffer, SEPARATOR, &save_ptr);
+
                     while (slave_response != NULL) {
                         int shm_index = total_files - remaining_files;
 
