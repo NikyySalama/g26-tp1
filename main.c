@@ -4,6 +4,7 @@
 #include <unistd.h>
 #include <sys/time.h>
 #include <stdlib.h>
+#include <sys/wait.h>
 #include <sys/select.h>
 #include "shared_memory_lib.h"
 #include "semaphore_lib.h"
@@ -162,6 +163,7 @@ int main(int argc, char *argv[]) {
         }
     }
 
+    end_slavery(slave_qty);
     end_data_sending(shm_main_ptr, sem_main, total_files);
 
     close_semaphore(sem_main);

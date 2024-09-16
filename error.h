@@ -24,6 +24,7 @@
 // Mensajes de error de procesos
 #define PROCESS_CREATING                        "No se pudo crear el proceso\n"
 #define CHILD_PROCESS_EXECUTING                 "No se pudo ejecutar el proceso hijo\n"
+#define SLAVE_WAITING                           "No se pudo realizar wait del esclavo\n"
 
 // Mensajes de error de File Descriptors
 #define FDS_SELECT                              "No se pudo realizar select() de los FileDescriptors\n"

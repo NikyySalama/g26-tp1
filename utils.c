@@ -40,6 +40,13 @@ void setup_slaves(TSlaveInfo* slaves_info, int slave_qty, int slot_size) {
     }
 }
 
+void end_slavery(int slave_qty) {
+    for (int i = 0; i < slave_qty; i++) {
+        if(wait(NULL) == -1)
+            ERROR_HANDLING(SLAVE_WAITING);
+    }
+}
+
 int is_closed(int fd) {
     return fcntl(fd, F_GETFD) == -1 && errno == EBADF;
 }

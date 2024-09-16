@@ -43,6 +43,13 @@ int setup_file_distribution(int slave_qty, int total_files, int* initial_files_q
 void send_file(int pipe_fd, char *arg, int* current_index);
 
 /**
+ * @brief Espera y finaliza a los procesos hijos.
+ *
+ * @param slave_qty La cantidad de esclavos.
+ */
+void end_slavery(int slave_qty);
+
+/**
  * @brief Finaliza el envío de datos a través de la memoria compartida.
  *
  * @param ptr Puntero a la memoria compartida.
